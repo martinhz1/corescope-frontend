@@ -447,7 +447,7 @@ export default function SurveyBuilderPage() {
 
   const handleSave = async () => {
     if (!title.trim()) return toast.error("Agrega un título al pulso");
-    if (!clientName.trim()) return toast.error("Ingresa el nombre del cliente");
+    if (!clientName.trim()) return toast.error("Ingresa el nombre de la organización");
     if (selected.length === 0) return toast.error("Selecciona al menos una pregunta");
 
     // Validar que cada demográfica tenga al menos 2 opciones
@@ -750,32 +750,21 @@ export default function SurveyBuilderPage() {
         )}
         {/* Config — sólo en create mode (en edit, la metadata se gestiona desde el detail page) */}
         {!editMode && (
-        <div style={{ animation: "fadeUp 0.4s ease both" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+        <div style={{ animation: "fadeUp 0.4s ease both", marginBottom: 28 }}>
+          {/* Fila 1: campos principales */}
+          <div style={{ display: "grid", gridTemplateColumns: "2.2fr 1.2fr 0.75fr 0.75fr 1.1fr", gap: 10, marginBottom: 10, alignItems: "start" }}>
             <div style={S.configCard}>
               <label style={S.label}>Título del pulso</label>
               <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ej: Pulso Q1 2026" style={S.inputLine} />
             </div>
             <div style={S.configCard}>
-              <label style={S.label}>Cliente</label>
+              <label style={S.label}>Organización</label>
               <input value={clientName} onChange={e => setClientName(e.target.value)} placeholder="Ej: Empresa ABC" style={S.inputLine} />
-            </div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 0.5fr 0.5fr 0.6fr", gap: 12, marginBottom: 28 }}>
-            <div style={S.configCard}>
-              <label style={S.label}>Logo del cliente</label>
-              <div style={{ marginTop: 6 }}>
-                <LogoInput
-                  value={logoUrl}
-                  onChange={setLogoUrl}
-                  inputStyle={{ ...S.inputLine, marginTop: 0 }}
-                />
-              </div>
             </div>
             <div style={S.configCard}>
               <label style={S.label}>Color</label>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
-                <input type="color" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} style={{ width: 32, height: 32, border: "none", borderRadius: 8, cursor: "pointer", padding: 0 }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
+                <input type="color" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} style={{ width: 28, height: 28, border: "none", borderRadius: 6, cursor: "pointer", padding: 0, flexShrink: 0 }} />
                 <input
                   type="text"
                   value={primaryColor}
@@ -785,7 +774,7 @@ export default function SurveyBuilderPage() {
                     if (/^#[0-9a-fA-F]{0,6}$/.test(v)) setPrimaryColor(v);
                   }}
                   maxLength={7}
-                  style={{ width: 80, fontSize: 13, color: "#94a3b8", fontFamily: "monospace", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "5px 8px", outline: "none", background: "#0f172a" }}
+                  style={{ width: 68, fontSize: 12, color: "#94a3b8", fontFamily: "monospace", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, padding: "4px 6px", outline: "none", background: "#0f172a" }}
                 />
               </div>
             </div>
@@ -806,62 +795,65 @@ export default function SurveyBuilderPage() {
                 </button>
               )}
             </div>
-            {!editMode && (
-              <>
-              <div style={{ ...S.configCard, gridColumn: "1 / -1" }}>
-                <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
-                  <input
-                    type="checkbox"
-                    checked={showLabelsInForm}
-                    onChange={e => setShowLabelsInForm(e.target.checked)}
-                    style={{ marginTop: 3, accentColor: "#2563eb", flexShrink: 0, width: 16, height: 16, cursor: "pointer" }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ ...S.label, marginBottom: 4 }}>Mostrar etiquetas de preguntas en el formulario</div>
-                    <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.5 }}>
-                      Si está activo, las etiquetas (ej. "Liderazgo") aparecen en negrita sobre el texto de cada pregunta cuando el respondente completa la encuesta. No afecta la review final — eso se controla aparte.
-                    </div>
-                  </div>
-                </label>
+          </div>
+          {/* Fila 2: logotipo + opciones */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+            <div style={S.configCard}>
+              <label style={S.label}>Logotipo</label>
+              <div style={{ marginTop: 6 }}>
+                <LogoInput
+                  value={logoUrl}
+                  onChange={setLogoUrl}
+                  inputStyle={{ ...S.inputLine, marginTop: 0 }}
+                />
               </div>
-              <div style={{ ...S.configCard, gridColumn: "1 / -1" }}>
-                <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
-                  <input
-                    type="checkbox"
-                    checked={showPersonalReview}
-                    onChange={e => setShowPersonalReview(e.target.checked)}
-                    style={{ marginTop: 3, accentColor: "#2563eb", flexShrink: 0, width: 16, height: 16, cursor: "pointer" }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ ...S.label, marginBottom: 4 }}>Mostrar al respondente sus respuestas al final</div>
-                    <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.5 }}>
-                      Antes de finalizar, el respondente verá un ranking enfocado de sus respuestas Likert ordenadas de menor a mayor acuerdo, con opción de volver a editar. Útil para encuestas de autoevaluación.
-                    </div>
+            </div>
+            <div style={S.configCard}>
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={showLabelsInForm}
+                  onChange={e => setShowLabelsInForm(e.target.checked)}
+                  style={{ marginTop: 3, accentColor: "#2563eb", flexShrink: 0, width: 14, height: 14, cursor: "pointer" }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ ...S.label, marginBottom: 4 }}>Mostrar etiquetas en el formulario</div>
+                  <div style={{ fontSize: 11.5, color: "#64748b", lineHeight: 1.5 }}>
+                    Las etiquetas (ej. "Liderazgo") aparecen en negrita sobre el texto de cada pregunta.
                   </div>
-                </label>
-
-                {showPersonalReview && (
-                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                    <label style={{ ...S.label, marginBottom: 4, display: "block" }}>
-                      Cómo se muestran las preguntas en la review
-                    </label>
-                    <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.5, marginBottom: 8 }}>
-                      Controla el contenido de cada item del ranking individual. Las preguntas sin etiqueta caen a su texto.
-                    </div>
-                    <select
-                      value={reviewQuestionDisplay}
-                      onChange={e => setReviewQuestionDisplay(e.target.value)}
-                      style={S.select}
-                    >
-                      <option value="both">Etiqueta + afirmación (default)</option>
-                      <option value="label_only">Solo etiqueta</option>
-                      <option value="text_only">Solo afirmación</option>
-                    </select>
+                </div>
+              </label>
+            </div>
+            <div style={S.configCard}>
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={showPersonalReview}
+                  onChange={e => setShowPersonalReview(e.target.checked)}
+                  style={{ marginTop: 3, accentColor: "#2563eb", flexShrink: 0, width: 14, height: 14, cursor: "pointer" }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ ...S.label, marginBottom: 4 }}>Mostrar respuestas al final</div>
+                  <div style={{ fontSize: 11.5, color: "#64748b", lineHeight: 1.5 }}>
+                    El respondente verá un ranking de sus respuestas Likert antes de finalizar.
                   </div>
-                )}
-              </div>
-              </>
-            )}
+                </div>
+              </label>
+              {showPersonalReview && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                  <label style={{ ...S.label, marginBottom: 4, display: "block" }}>Vista en la review</label>
+                  <select
+                    value={reviewQuestionDisplay}
+                    onChange={e => setReviewQuestionDisplay(e.target.value)}
+                    style={S.select}
+                  >
+                    <option value="both">Etiqueta + afirmación</option>
+                    <option value="label_only">Solo etiqueta</option>
+                    <option value="text_only">Solo afirmación</option>
+                  </select>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         )}
@@ -936,7 +928,7 @@ export default function SurveyBuilderPage() {
               })}
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 520, overflowY: "auto", paddingRight: 4 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 600, overflowY: "auto", paddingRight: 4 }}>
               {filtered.map(q => {
                 const isSel = selected.find(s => s.id === q.id);
                 return (
@@ -1084,7 +1076,7 @@ export default function SurveyBuilderPage() {
                 <div style={{ fontSize: 14, color: "#475569", marginTop: 12 }}>Elige un template arriba o haz click en una pregunta</div>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: 640, overflowY: "auto", paddingRight: 4 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: 740, overflowY: "auto", paddingRight: 4 }}>
                 {selected.some(q => q.isDemographic) && (
                   <div>
                     <div style={S.selectedSectionHeader}>
@@ -1501,9 +1493,9 @@ const S = {
     boxShadow: "0 1px 0 0 rgba(37,99,235,0.04)",
   },
   topBarInner: {
-    maxWidth: 1100,
+    maxWidth: 1400,
     margin: "0 auto",
-    padding: "14px 24px",
+    padding: "14px 32px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -1597,7 +1589,7 @@ const S = {
   },
 
   // ── Content ──
-  content: { maxWidth: 1100, margin: "0 auto", padding: "32px 24px 24px" },
+  content: { maxWidth: 1400, margin: "0 auto", padding: "32px 32px 32px" },
 
   // ── Config cards ──
   configCard: {
@@ -1641,7 +1633,7 @@ const S = {
   },
 
   // ── Columns layout ──
-  columns: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 },
+  columns: { display: "grid", gridTemplateColumns: "1fr 1.25fr", gap: 28 },
 
   // ── Section headers ──
   sectionHeader: {
