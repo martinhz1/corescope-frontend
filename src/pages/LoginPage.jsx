@@ -72,28 +72,28 @@ const FEATURES = [
 
 const USE_CASES = [
   {
-    label: "CONSULTORÍA ORGANIZACIONAL",
-    title: "Diagnósticos de clima y cultura",
-    desc: "Configura la encuesta, distribuye el enlace y permite que los colaboradores respondan a su propio ritmo. Al cerrar el proceso, descarga el informe completo sin trabajo operativo de tabulación.",
-    metric: "Hasta 3 días menos de diseño de reportes por proyecto",
+    label: "DOCENTES Y FORMADORES",
+    title: "Encuestas durante la clase",
+    desc: "Proyecta el QR en la pantalla y los alumnos responden desde su celular. Al terminar la actividad tienes el dashboard con los resultados consolidados para comentar en el momento.",
+    metric: "Respuestas del grupo completo en menos de dos minutos",
   },
   {
-    label: "FACILITACIÓN Y CAPACITACIÓN",
-    title: "Workshops y talleres interactivos",
-    desc: "Proyecta el código QR al inicio o al cierre del taller. Los asistentes evalúan la sesión y tú muestras los resultados en pantalla para abrir el debate mientras el grupo todavía está reunido.",
-    metric: "Feedback del 95% de la audiencia antes de que termine la actividad",
+    label: "SALUD Y BIENESTAR",
+    title: "Feedback anónimo de pacientes",
+    desc: "Psicólogos, terapeutas y médicos pueden recoger satisfacción o percepciones de sus pacientes sin que nadie tenga que identificarse. El anonimato incentiva respuestas más honestas.",
+    metric: "Sin app, sin cuenta — solo un enlace",
   },
   {
-    label: "COMUNICACIÓN INTERNA",
-    title: "Town Halls y sesiones generales",
-    desc: "Monitorea el entendimiento de la estrategia o el nivel de certidumbre ante cambios corporativos. Los líderes obtienen un termómetro exacto de la percepción interna de manera inmediata.",
-    metric: "Diagnóstico del equipo completo en menos de tres minutos",
+    label: "NEGOCIOS Y SERVICIOS",
+    title: "Satisfacción post-servicio",
+    desc: "Salones de belleza, restaurantes, gimnasios o cualquier negocio de servicios puede enviar una encuesta corta después de cada atención. Los resultados se acumulan en un panel siempre actualizado.",
+    metric: "NPS e índice de satisfacción calculados automáticamente",
   },
   {
-    label: "INVESTIGACIÓN APLICADA",
-    title: "Datos listos para tu análisis",
-    desc: "Diseña tu instrumento con escalas Likert, preguntas abiertas y variables de segmentación. Comparte el link con tu muestra y descarga los datos en Excel estructurado, listos para importar a tu análisis estadístico.",
-    metric: "Compatible con SPSS, R y Python",
+    label: "CONSULTORÍA Y FORMACIÓN",
+    title: "Diagnósticos y talleres",
+    desc: "Consultores y facilitadores pueden medir clima, satisfacción post-capacitación o alineamiento estratégico. Resultados listos para presentar al cliente sin tabular datos a mano.",
+    metric: "Informe descargable en PDF al terminar el proceso",
   },
 ];
 
@@ -105,24 +105,24 @@ const STEPS = [
 
 const FAQS = [
   {
-    q: "¿Cuál es la diferencia entre CoreScope y herramientas como Mentimeter o Kahoot?",
-    a: "Esas herramientas están orientadas a la gamificación y el entretenimiento visual, pero no guardan una estructura de datos organizacional. CoreScope combina la velocidad de la interacción en vivo con la profundidad analítica de RRHH: calcula índices de favorabilidad, NPS corporativo y permite segmentar los resultados por área o cargo — algo que las plataformas de trivia no hacen.",
+    q: "¿Solo pueden usarlo empresas o también profesionales independientes?",
+    a: "Cualquier persona puede usar CoreScope. Está diseñado tanto para un psicólogo que quiere recoger feedback anónimo de sus pacientes como para una empresa que mide el clima de sus equipos. Si trabajas con personas y necesitas escucharlas, CoreScope funciona para ti.",
   },
   {
-    q: "¿El dashboard resiste la carga de cientos de personas respondiendo al mismo tiempo?",
-    a: "Sí. La arquitectura de CoreScope está diseñada para procesar ingresos masivos de datos en paralelo. Los gráficos se actualizan de forma fluida a medida que la audiencia envía sus respuestas, sin necesidad de recargar la página.",
+    q: "¿Los participantes necesitan instalar algo o crear una cuenta?",
+    a: "No. Reciben un enlace o escanean un código QR y responden directamente desde el navegador de su celular o computadora. Sin apps, sin registro, sin fricción.",
   },
   {
-    q: "Si se proyectan los resultados en vivo, ¿cómo se protege la identidad de los respondentes?",
-    a: "Las respuestas cerradas (Likert y NPS) se muestran únicamente de forma agregada en porcentajes y promedios. Para preguntas de texto libre o filtros demográficos, el sistema bloquea la visualización si el volumen de un segmento es menor a 3 respuestas, impidiendo identificar a alguien por descarte.",
+    q: "¿Cómo se garantiza que las respuestas sean anónimas?",
+    a: "CoreScope no almacena ningún dato de autenticación del respondente. Las respuestas se registran sin ningún identificador personal. Cuando se muestran resultados segmentados, el sistema bloquea automáticamente la visualización si un grupo tiene menos de 3 respuestas, evitando que alguien sea identificado por descarte.",
   },
   {
-    q: "¿Es necesario instalar software o coordinar con el área de TI de la empresa?",
-    a: "No. Funciona completamente desde el navegador web, sin instalaciones ni integraciones. Solo necesitas conexión a internet en el lugar del evento para proyectar el dashboard, y que la audiencia tenga acceso a datos móviles o Wi-Fi para responder.",
+    q: "¿Cuál es la diferencia con Google Forms o SurveyMonkey?",
+    a: "Google Forms y SurveyMonkey entregan los datos en bruto: ves una hoja de cálculo o gráficos básicos. CoreScope va un paso más allá — calcula automáticamente índices de favorabilidad y NPS, permite segmentar resultados por variables demográficas, y genera un informe en PDF listo para presentar. No necesitas procesar ni formatear nada.",
   },
   {
-    q: "¿Puedo usar CoreScope para un taller de un solo día sin un contrato largo?",
-    a: "Sí. Puedes suscribirte por el mes en que tienes el evento o proyecto, utilizarlo sin límites de encuestas en ese período, y cancelar la renovación cuando tu proyecto concluya. Sin contratos anuales obligatorios.",
+    q: "¿Necesito tarjeta de crédito para empezar?",
+    a: "No. Crea tu cuenta, configura tu primera encuesta y empieza a recibir respuestas sin ingresar datos de pago. Solo necesitas un plan pago cuando quieras superar el límite del plan gratuito.",
   },
 ];
 
@@ -216,19 +216,13 @@ export default function LoginPage() {
         <div style={S.heroDotGrid} />
 
         <div style={S.heroInner}>
-          {/* Badge */}
-          <div style={S.badge}>
-            <span style={S.badgeDot} />
-            <span style={S.badgeText}>Medición organizacional ágil y en vivo</span>
-          </div>
-
           {/* Headline */}
           <h1 className="cs-h1" style={S.h1}>
-            Encuestas organizacionales<br />
-            con dashboards en vivo.
+            Encuestas con dashboards<br />
+            de resultados en vivo.
           </h1>
           <p className="cs-hero-sub" style={S.heroSub}>
-            Diseña cuestionarios para diagnósticos de clima o dinámicas en talleres.
+            Diseña encuestas para levantar información de tus usuarios o clientes.
             Comparte por enlace o QR y recibe respuestas anónimas sin registro.
             Los datos se procesan al instante en paneles listos para proyectar o descargar.
           </p>
@@ -319,7 +313,7 @@ export default function LoginPage() {
       <section id="producto" style={S.section}>
         <div style={S.inner}>
           <div style={S.sectionEyebrow}>PRODUCTO</div>
-          <h2 className="cs-h2" style={S.h2}>Todo lo que necesitás,<br />nada que no usás.</h2>
+          <h2 className="cs-h2" style={S.h2}>Todo lo que necesitas<br />para recoger feedback.</h2>
           <div className="cs-feat-grid" style={S.featGrid}>
             {FEATURES.map(({ icon, title, desc }) => (
               <div key={title} className="cs-feat-card" style={S.featCard}>
@@ -336,7 +330,7 @@ export default function LoginPage() {
       <section id="casos" style={{ ...S.section, borderTop: S.divider }}>
         <div style={S.inner}>
           <div style={S.sectionEyebrow}>CASOS DE USO</div>
-          <h2 className="cs-h2" style={S.h2}>Para cada intervención<br />de tu consultoría.</h2>
+          <h2 className="cs-h2" style={S.h2}>Para cualquier profesional<br />que trabaja con personas.</h2>
           <div className="cs-use-grid" style={S.useGrid}>
             {USE_CASES.map(({ label, title, desc, metric }) => (
               <div key={title} className="cs-use-card" style={S.useCard}>
