@@ -17,11 +17,11 @@ const FEATURES = [
   {
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/>
+        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
       </svg>
     ),
-    title: "Crea en minutos",
-    desc: "Banco de preguntas listo para usar. Likert, NPS y texto libre. Sin configuración técnica, sin fricciones.",
+    title: "Acceso por QR o enlace",
+    desc: "Los participantes responden desde su celular o computadora escaneando un código QR o abriendo un enlace. Sin cuentas, sin contraseñas, sin barreras.",
   },
   {
     icon: (
@@ -29,17 +29,17 @@ const FEATURES = [
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
       </svg>
     ),
-    title: "Dashboard en vivo",
-    desc: "Favorabilidad, NPS y distribución de respuestas actualizados en tiempo real. Tu cliente ve los datos mientras llegan.",
+    title: "Datos en tiempo real",
+    desc: "El panel recibe e integra las respuestas en el mismo segundo en que se envían. Ideal para proyectar gráficos consolidados en vivo frente a la audiencia.",
   },
   {
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
       </svg>
     ),
-    title: "Exportación lista",
-    desc: "Excel y PDF generados con un clic. Resultados presentables para el cliente sin formatear nada a mano.",
+    title: "Métricas nativas de RRHH",
+    desc: "Favorabilidad Likert y NPS calculados automáticamente. Sin fórmulas manuales, sin hojas de cálculo intermedias para llegar al número.",
   },
   {
     icon: (
@@ -47,17 +47,17 @@ const FEATURES = [
         <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
       </svg>
     ),
-    title: "Segmentación",
-    desc: "Resultados cruzados por variables demográficas. Área, género, seniority — el corte que tu análisis necesita.",
+    title: "Segmentación instantánea",
+    desc: "Filtra los resultados por área, cargo o género con un clic. Identifica patrones en equipos concretos sin comprometer el anonimato.",
   },
   {
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
       </svg>
     ),
-    title: "Link único por encuesta",
-    desc: "QR, WhatsApp o email. Los respondentes no necesitan cuenta ni app. Acceso inmediato desde cualquier dispositivo.",
+    title: "Reportes ejecutivos listos",
+    desc: "Descarga el informe en PDF con diseño profesional para entregar a dirección o clientes, o exporta la base completa a Excel para análisis propio.",
   },
   {
     icon: (
@@ -65,44 +65,65 @@ const FEATURES = [
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
       </svg>
     ),
-    title: "Respuestas anónimas",
-    desc: "No se almacena ningún dato identificable del respondente. Anonimato garantizado por diseño, no por política.",
+    title: "Anonimato por diseño",
+    desc: "No se almacena ningún dato de autenticación del respondente. Los filtros demográficos se bloquean automáticamente si un grupo tiene menos de 3 respuestas.",
   },
 ];
 
 const USE_CASES = [
   {
-    label: "FORMACIÓN",
-    title: "Post-capacitación",
-    desc: "Mide satisfacción y aprendizaje percibido en los primeros 30 minutos después de cada sesión.",
-    metric: "84% favorabilidad promedio",
+    label: "CONSULTORÍA ORGANIZACIONAL",
+    title: "Diagnósticos de clima y cultura",
+    desc: "Configura la encuesta, distribuye el enlace y permite que los colaboradores respondan a su propio ritmo. Al cerrar el proceso, descarga el informe completo sin trabajo operativo de tabulación.",
+    metric: "Hasta 3 días menos de diseño de reportes por proyecto",
   },
   {
-    label: "CULTURA",
-    title: "Clima laboral",
-    desc: "Detecta señales tempranas de tensión antes de que se conviertan en rotación.",
-    metric: "3× más respuestas que email",
+    label: "FACILITACIÓN Y CAPACITACIÓN",
+    title: "Workshops y talleres interactivos",
+    desc: "Proyecta el código QR al inicio o al cierre del taller. Los asistentes evalúan la sesión y tú muestras los resultados en pantalla para abrir el debate mientras el grupo todavía está reunido.",
+    metric: "Feedback del 95% de la audiencia antes de que termine la actividad",
   },
   {
-    label: "ENGAGEMENT",
-    title: "NPS interno",
-    desc: "Net Promoter Score del equipo de forma periódica. Traza la evolución ola a ola.",
-    metric: "Resultados en menos de 24h",
+    label: "COMUNICACIÓN INTERNA",
+    title: "Town Halls y sesiones generales",
+    desc: "Monitorea el entendimiento de la estrategia o el nivel de certidumbre ante cambios corporativos. Los líderes obtienen un termómetro exacto de la percepción interna de manera inmediata.",
+    metric: "Diagnóstico del equipo completo en menos de tres minutos",
+  },
+  {
+    label: "INVESTIGACIÓN APLICADA",
+    title: "Datos listos para tu análisis",
+    desc: "Diseña tu instrumento con escalas Likert, preguntas abiertas y variables de segmentación. Comparte el link con tu muestra y descarga los datos en Excel estructurado, listos para importar a tu análisis estadístico.",
+    metric: "Compatible con SPSS, R y Python",
   },
 ];
 
 const STEPS = [
-  { n: "1", title: "Crea el pulso", desc: "Selecciona preguntas del banco o escribe las tuyas. Agrega el logo del cliente y una fecha de cierre." },
-  { n: "2", title: "Comparte el link", desc: "Un link único. Envíalo por WhatsApp, email o muéstralo como código QR en pantalla. Sin logins para el respondente." },
-  { n: "3", title: "Revisa los resultados", desc: "Dashboard actualizado en tiempo real. Exporta a Excel o PDF cuando estés listo para presentar." },
+  { n: "1", title: "Configura tu cuestionario", desc: "Elige entre preguntas Likert, NPS o texto libre. Agrega las variables demográficas que necesitas analizar, como áreas o sucursales." },
+  { n: "2", title: "Muestra el QR o envía el enlace", desc: "Proyecta el código QR en pantalla durante tu evento en vivo, o distribuye el enlace por los canales internos de la organización." },
+  { n: "3", title: "Analiza, proyecta o descarga", desc: "Observa cómo se actualizan los gráficos en tiempo real durante la sesión, o descarga el reporte ejecutivo en PDF una vez concluida la medición." },
 ];
 
 const FAQS = [
-  { q: "¿Los respondentes necesitan una cuenta?", a: "No. Reciben un link y responden directamente desde el navegador. Sin apps, sin registro, sin fricción." },
-  { q: "¿Es anónimo para los respondentes?", a: "Sí. No se almacena ningún dato identificable. El anonimato está garantizado por diseño — no hay forma de rastrear quién respondió qué." },
-  { q: "¿Cuántas respuestas puedo recibir?", a: "El plan gratuito incluye hasta 200 respuestas por mes. Para proyectos más grandes hay planes Pro con respuestas ilimitadas." },
-  { q: "¿Puedo personalizar con el branding de mi cliente?", a: "Sí. Puedes subir el logo del cliente y elegir un color primario por encuesta. Cada pulso puede tener identidad propia." },
-  { q: "¿Necesito tarjeta de crédito para empezar?", a: "No. Crea tu cuenta, configura tu primer pulso y empieza a recibir respuestas. Sin datos de pago hasta que elijas un plan pago." },
+  {
+    q: "¿Cuál es la diferencia entre CoreScope y herramientas como Mentimeter o Kahoot?",
+    a: "Esas herramientas están orientadas a la gamificación y el entretenimiento visual, pero no guardan una estructura de datos organizacional. CoreScope combina la velocidad de la interacción en vivo con la profundidad analítica de RRHH: calcula índices de favorabilidad, NPS corporativo y permite segmentar los resultados por área o cargo — algo que las plataformas de trivia no hacen.",
+  },
+  {
+    q: "¿El dashboard resiste la carga de cientos de personas respondiendo al mismo tiempo?",
+    a: "Sí. La arquitectura de CoreScope está diseñada para procesar ingresos masivos de datos en paralelo. Los gráficos se actualizan de forma fluida a medida que la audiencia envía sus respuestas, sin necesidad de recargar la página.",
+  },
+  {
+    q: "Si se proyectan los resultados en vivo, ¿cómo se protege la identidad de los respondentes?",
+    a: "Las respuestas cerradas (Likert y NPS) se muestran únicamente de forma agregada en porcentajes y promedios. Para preguntas de texto libre o filtros demográficos, el sistema bloquea la visualización si el volumen de un segmento es menor a 3 respuestas, impidiendo identificar a alguien por descarte.",
+  },
+  {
+    q: "¿Es necesario instalar software o coordinar con el área de TI de la empresa?",
+    a: "No. Funciona completamente desde el navegador web, sin instalaciones ni integraciones. Solo necesitas conexión a internet en el lugar del evento para proyectar el dashboard, y que la audiencia tenga acceso a datos móviles o Wi-Fi para responder.",
+  },
+  {
+    q: "¿Puedo usar CoreScope para un taller de un solo día sin un contrato largo?",
+    a: "Sí. Puedes suscribirte por el mes en que tienes el evento o proyecto, utilizarlo sin límites de encuestas en ese período, y cancelar la renovación cuando tu proyecto concluya. Sin contratos anuales obligatorios.",
+  },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -198,17 +219,18 @@ export default function LoginPage() {
           {/* Badge */}
           <div style={S.badge}>
             <span style={S.badgeDot} />
-            <span style={S.badgeText}>Plataforma de medición organizacional</span>
+            <span style={S.badgeText}>Medición organizacional ágil y en vivo</span>
           </div>
 
           {/* Headline */}
           <h1 className="cs-h1" style={S.h1}>
-            Mide el pulso de tu<br />
-            organización.
+            Encuestas organizacionales<br />
+            con dashboards en vivo.
           </h1>
           <p className="cs-hero-sub" style={S.heroSub}>
-            Encuestas de satisfacción con NPS, Likert y preguntas abiertas.
-            Dashboard en vivo. Resultados listos para presentar.
+            Diseña cuestionarios para diagnósticos de clima o dinámicas en talleres.
+            Comparte por enlace o QR y recibe respuestas anónimas sin registro.
+            Los datos se procesan al instante en paneles listos para proyectar o descargar.
           </p>
 
           {/* CTAs */}
@@ -380,10 +402,10 @@ export default function LoginPage() {
         <div style={S.ctaAurora} />
         <div style={{ ...S.inner, position: "relative", zIndex: 1 }}>
           <h2 className="cs-h2" style={{ ...S.h2, fontSize: 44, marginBottom: 16, textAlign: "center" }}>
-            Tu próxima encuesta está<br />a tres minutos.
+            Lanza tus primeras encuestas<br />organizacionales hoy.
           </h2>
-          <p style={{ ...S.heroSub, textAlign: "center", margin: "0 auto 36px", maxWidth: 440 }}>
-            Sin configuración compleja. Sin tarjeta de crédito.
+          <p style={{ ...S.heroSub, textAlign: "center", margin: "0 auto 36px", maxWidth: 480 }}>
+            Dashboards automáticos, reportes listos para presentar y cero registro de participantes.
           </p>
           <button className="cs-btn-brand" onClick={() => openModal("register")} style={{ ...S.btnBrand, padding: "14px 40px" }}>
             Comenzar gratis
@@ -499,8 +521,10 @@ const CSS = `
   @media (max-width: 1024px) {
     .cs-mockup  { display: none !important; }
     .cs-feat-grid { grid-template-columns: repeat(2,1fr) !important; }
-    .cs-use-grid  { grid-template-columns: 1fr !important; }
     .cs-steps     { grid-template-columns: 1fr !important; }
+  }
+  @media (max-width: 640px) {
+    .cs-use-grid  { grid-template-columns: 1fr !important; }
   }
   @media (max-width: 640px) {
     .cs-h1  { font-size: 38px !important; }
@@ -729,7 +753,7 @@ const S = {
   featDesc: { fontSize: 13.5, color: "rgba(255,255,255,0.38)", lineHeight: 1.65, margin: 0 },
 
   // Use cases
-  useGrid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 },
+  useGrid: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 },
   useCard: {
     border: divider, borderRadius: t.radius.card, padding: "28px 24px",
     transition: "border-color 0.2s",
