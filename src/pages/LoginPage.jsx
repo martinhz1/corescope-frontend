@@ -394,7 +394,7 @@ export default function LoginPage() {
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
       <footer className="cs-footer" style={S.footer}>
         <div style={S.footerLeft}>
-          <img src="/logo-corescope-transparente.png" alt="CoreScope" style={{ height: 32, width: "auto" }} />
+          <img src="/logo-corescope-transparente.png" alt="CoreScope" style={{ height: 44, width: "auto" }} />
           <span style={S.footerCopy}>© 2026 CoreScope</span>
         </div>
         <div style={S.footerRight}>
@@ -419,7 +419,7 @@ export default function LoginPage() {
               </svg>
             </button>
 
-            <img src="/logo-corescope-transparente.png" alt="CoreScope" style={{ height: 36, marginBottom: 28 }} />
+            <img src="/logo-corescope-transparente.png" alt="CoreScope" style={{ height: 52, marginBottom: 28 }} />
 
             <div style={S.modalTabs}>
               {[{ k: "login", l: "Iniciar sesión" }, { k: "register", l: "Registrarse" }].map(({ k, l }) => (
@@ -545,7 +545,7 @@ const S = {
     backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
     borderBottomColor: "rgba(255,255,255,0.07)",
   },
-  navLogo: { height: 36, width: "auto", flexShrink: 0 },
+  navLogo: { height: 52, width: "auto", flexShrink: 0 },
   navLinks: { display: "flex", alignItems: "center", gap: 4, flex: 1 },
   navLink: {
     fontFamily: t.font.body, fontSize: 13.5, fontWeight: 450,
