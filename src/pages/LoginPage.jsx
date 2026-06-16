@@ -20,7 +20,7 @@ const FEATURES = [
         <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/>
       </svg>
     ),
-    title: "Creá en minutos",
+    title: "Crea en minutos",
     desc: "Banco de preguntas listo para usar. Likert, NPS y texto libre. Sin configuración técnica, sin fricciones.",
   },
   {
@@ -74,35 +74,35 @@ const USE_CASES = [
   {
     label: "FORMACIÓN",
     title: "Post-capacitación",
-    desc: "Medí satisfacción y aprendizaje percibido en los primeros 30 minutos después de cada sesión.",
+    desc: "Mide satisfacción y aprendizaje percibido en los primeros 30 minutos después de cada sesión.",
     metric: "84% favorabilidad promedio",
   },
   {
     label: "CULTURA",
     title: "Clima laboral",
-    desc: "Detectá señales tempranas de tensión antes de que se conviertan en rotación.",
+    desc: "Detecta señales tempranas de tensión antes de que se conviertan en rotación.",
     metric: "3× más respuestas que email",
   },
   {
     label: "ENGAGEMENT",
     title: "NPS interno",
-    desc: "Net Promoter Score del equipo de forma periódica. Trazá la evolución ola a ola.",
+    desc: "Net Promoter Score del equipo de forma periódica. Traza la evolución ola a ola.",
     metric: "Resultados en menos de 24h",
   },
 ];
 
 const STEPS = [
-  { n: "1", title: "Creá el pulso", desc: "Seleccioná preguntas del banco o escribí las tuyas. Agregá el logo del cliente y una fecha de cierre." },
-  { n: "2", title: "Compartí el link", desc: "Un link único. Mandalo por WhatsApp, email o mostralo como QR en pantalla. Sin logins para el respondente." },
-  { n: "3", title: "Leé los resultados", desc: "Dashboard actualizado en tiempo real. Exportá a Excel o PDF cuando estés listo para presentar." },
+  { n: "1", title: "Crea el pulso", desc: "Selecciona preguntas del banco o escribe las tuyas. Agrega el logo del cliente y una fecha de cierre." },
+  { n: "2", title: "Comparte el link", desc: "Un link único. Envíalo por WhatsApp, email o muéstralo como código QR en pantalla. Sin logins para el respondente." },
+  { n: "3", title: "Revisa los resultados", desc: "Dashboard actualizado en tiempo real. Exporta a Excel o PDF cuando estés listo para presentar." },
 ];
 
 const FAQS = [
   { q: "¿Los respondentes necesitan una cuenta?", a: "No. Reciben un link y responden directamente desde el navegador. Sin apps, sin registro, sin fricción." },
   { q: "¿Es anónimo para los respondentes?", a: "Sí. No se almacena ningún dato identificable. El anonimato está garantizado por diseño — no hay forma de rastrear quién respondió qué." },
   { q: "¿Cuántas respuestas puedo recibir?", a: "El plan gratuito incluye hasta 200 respuestas por mes. Para proyectos más grandes hay planes Pro con respuestas ilimitadas." },
-  { q: "¿Puedo personalizar con el branding de mi cliente?", a: "Sí. Podés subir el logo del cliente y elegir un color primario por encuesta. Cada pulso puede tener identidad propia." },
-  { q: "¿Necesito tarjeta de crédito para empezar?", a: "No. Creás tu cuenta, configurás tu primer pulso y empezás a recibir respuestas. Sin datos de pago hasta que elijas un plan pago." },
+  { q: "¿Puedo personalizar con el branding de mi cliente?", a: "Sí. Puedes subir el logo del cliente y elegir un color primario por encuesta. Cada pulso puede tener identidad propia." },
+  { q: "¿Necesito tarjeta de crédito para empezar?", a: "No. Crea tu cuenta, configura tu primer pulso y empieza a recibir respuestas. Sin datos de pago hasta que elijas un plan pago." },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -164,7 +164,7 @@ export default function LoginPage() {
 
       {/* ── NAV ─────────────────────────────────────────────────────────── */}
       <header className="cs-nav" style={{ ...S.nav, ...(scrolled ? S.navScrolled : {}) }}>
-        <img src="/Logo-CoreScope.png" alt="CoreScope" style={S.navLogo} />
+        <img src="/logo-corescope-transparente.png" alt="CoreScope" style={S.navLogo} />
 
         <nav style={S.navLinks}>
           {NAV_LINKS.map(({ label, id }) => (
@@ -394,7 +394,7 @@ export default function LoginPage() {
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
       <footer className="cs-footer" style={S.footer}>
         <div style={S.footerLeft}>
-          <img src="/Logo-CoreScope.png" alt="CoreScope" style={{ height: 24, width: "auto", mixBlendMode: "screen" }} />
+          <img src="/logo-corescope-transparente.png" alt="CoreScope" style={{ height: 32, width: "auto" }} />
           <span style={S.footerCopy}>© 2026 CoreScope</span>
         </div>
         <div style={S.footerRight}>
@@ -419,7 +419,7 @@ export default function LoginPage() {
               </svg>
             </button>
 
-            <img src="/Logo-CoreScope.png" alt="CoreScope" style={{ height: 28, mixBlendMode: "screen", marginBottom: 28 }} />
+            <img src="/logo-corescope-transparente.png" alt="CoreScope" style={{ height: 36, marginBottom: 28 }} />
 
             <div style={S.modalTabs}>
               {[{ k: "login", l: "Iniciar sesión" }, { k: "register", l: "Registrarse" }].map(({ k, l }) => (
@@ -468,6 +468,8 @@ export default function LoginPage() {
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 
 const CSS = `
+  html, body { margin: 0; padding: 0; background: #070b1a; overflow-x: hidden; }
+  *, *::before, *::after { box-sizing: border-box; }
   ${globalKeyframes}
   @keyframes barGrow { from { width: 0 } to { width: var(--pct) } }
   @keyframes heroin  { from { opacity:0; transform:translateY(18px) } to { opacity:1; transform:none } }
@@ -543,7 +545,7 @@ const S = {
     backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
     borderBottomColor: "rgba(255,255,255,0.07)",
   },
-  navLogo: { height: 28, width: "auto", mixBlendMode: "screen", flexShrink: 0 },
+  navLogo: { height: 36, width: "auto", flexShrink: 0 },
   navLinks: { display: "flex", alignItems: "center", gap: 4, flex: 1 },
   navLink: {
     fontFamily: t.font.body, fontSize: 13.5, fontWeight: 450,
@@ -583,7 +585,7 @@ const S = {
   },
   heroInner: {
     position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto",
-    width: "100%", padding: "80px 48px",
+    width: "100%", padding: "80px 48px", boxSizing: "border-box",
     animation: "heroin 0.7s cubic-bezier(0.16,1,0.3,1) both",
   },
   badge: {
