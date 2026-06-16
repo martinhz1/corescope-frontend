@@ -7,7 +7,7 @@ import { theme as t, globalKeyframes } from "../lib/theme";
 
 const LOGO_SRC = "/Logo-CoreScope.png";
 
-const GOOGLE_CLIENT_ID = "746559027969-8f14hks7c39rsrk078jqqseh6062o0cf.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
