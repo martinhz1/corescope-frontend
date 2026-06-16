@@ -92,7 +92,7 @@ const USE_CASES = [
   {
     label: "CONSULTORÍA Y FORMACIÓN",
     title: "Diagnósticos y talleres",
-    desc: "Consultores y facilitadores pueden medir clima, satisfacción post-capacitación o alineamiento estratégico. Resultados listos para presentar al cliente sin tabular datos a mano.",
+    desc: "Facilitadores y formadores pueden medir satisfacción post-taller o alineamiento con los objetivos de la sesión. Resultados listos para presentar al cliente sin tabular datos a mano.",
     metric: "Informe descargable en PDF al terminar el proceso",
   },
   {
@@ -105,7 +105,7 @@ const USE_CASES = [
 
 const STEPS = [
   { n: "1", title: "Configura tu cuestionario", desc: "Elige entre preguntas Likert, NPS o texto libre. Agrega las variables demográficas que necesitas analizar, como áreas o sucursales." },
-  { n: "2", title: "Muestra el QR o envía el enlace", desc: "Proyecta el código QR en pantalla durante tu evento en vivo, o distribuye el enlace por los canales internos de la organización." },
+  { n: "2", title: "Muestra el QR o envía el enlace", desc: "Proyecta el código QR en pantalla durante tu evento en vivo, o distribuye el enlace a tu grupo por WhatsApp, email o cualquier canal." },
   { n: "3", title: "Analiza, proyecta o descarga", desc: "Observa cómo se actualizan los gráficos en tiempo real durante la sesión, o descarga el reporte ejecutivo en PDF una vez concluida la medición." },
 ];
 
@@ -402,7 +402,7 @@ export default function LoginPage() {
         <div style={S.ctaAurora} />
         <div style={{ ...S.inner, position: "relative", zIndex: 1 }}>
           <h2 className="cs-h2" style={{ ...S.h2, fontSize: 44, marginBottom: 16, textAlign: "center" }}>
-            Lanza tus primeras encuestas<br />organizacionales hoy.
+            Lanza tu primera encuesta<br />y empieza a escuchar hoy.
           </h2>
           <p style={{ ...S.heroSub, textAlign: "center", margin: "0 auto 36px", maxWidth: 480 }}>
             Dashboards automáticos, reportes listos para presentar y cero registro de participantes.
