@@ -416,7 +416,7 @@ export default function LoginPage() {
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
       <footer className="cs-footer" style={S.footer}>
         <div style={S.footerLeft}>
-          <img src="/logo-corescope-transparente.png" alt="CoreScope" style={{ height: 44, width: "auto" }} />
+          <img src="/logo-corescope-transparente.png" alt="CoreScope" style={{ height: 56, width: "auto" }} />
           <span style={S.footerCopy}>© 2026 CoreScope</span>
         </div>
         <div style={S.footerRight}>
@@ -441,7 +441,7 @@ export default function LoginPage() {
               </svg>
             </button>
 
-            <img src="/logo-corescope-transparente.png" alt="CoreScope" style={{ height: 52, marginBottom: 28 }} />
+            <img src="/logo-corescope-transparente.png" alt="CoreScope" style={{ height: 64, marginBottom: 28 }} />
 
             <div style={S.modalTabs}>
               {[{ k: "login", l: "Iniciar sesión" }, { k: "register", l: "Registrarse" }].map(({ k, l }) => (
@@ -559,7 +559,7 @@ const S = {
   // Nav
   nav: {
     position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-    height: 56, display: "flex", alignItems: "center",
+    height: 72, display: "flex", alignItems: "center",
     padding: "0 32px", gap: 32,
     transition: "background 0.25s, border-color 0.25s",
     borderBottom: "1px solid transparent",
@@ -569,7 +569,7 @@ const S = {
     backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
     borderBottomColor: "rgba(255,255,255,0.07)",
   },
-  navLogo: { height: 52, width: "auto", flexShrink: 0 },
+  navLogo: { height: 68, width: "auto", flexShrink: 0 },
   navLinks: { display: "flex", alignItems: "center", gap: 4, flex: 1 },
   navLink: {
     fontFamily: t.font.body, fontSize: 13.5, fontWeight: 450,
@@ -590,7 +590,7 @@ const S = {
   // Hero
   hero: {
     minHeight: "100vh", display: "flex", alignItems: "center",
-    position: "relative", overflow: "hidden", paddingTop: 56,
+    position: "relative", overflow: "hidden", paddingTop: 72,
   },
   aurora1: {
     position: "absolute", inset: 0, pointerEvents: "none",
