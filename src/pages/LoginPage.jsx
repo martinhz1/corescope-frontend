@@ -95,6 +95,12 @@ const USE_CASES = [
     desc: "Consultores y facilitadores pueden medir clima, satisfacción post-capacitación o alineamiento estratégico. Resultados listos para presentar al cliente sin tabular datos a mano.",
     metric: "Informe descargable en PDF al terminar el proceso",
   },
+  {
+    label: "INVESTIGACIÓN Y ACADEMIA",
+    title: "Levantamiento de datos para tesis",
+    desc: "Diseña tu instrumento con escalas Likert, preguntas abiertas y variables de segmentación. Comparte el enlace con tu muestra y descarga los datos en Excel estructurado, listos para importar a tu análisis estadístico.",
+    metric: "Compatible con SPSS, R y Python",
+  },
 ];
 
 const STEPS = [
@@ -747,7 +753,7 @@ const S = {
   featDesc: { fontSize: 13.5, color: "rgba(255,255,255,0.38)", lineHeight: 1.65, margin: 0 },
 
   // Use cases
-  useGrid: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 },
+  useGrid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 },
   useCard: {
     border: divider, borderRadius: t.radius.card, padding: "28px 24px",
     transition: "border-color 0.2s",
