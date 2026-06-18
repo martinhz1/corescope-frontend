@@ -77,6 +77,7 @@ export default function SurveyListPage() {
   };
 
   const totalResponses = surveys.reduce((sum, s) => sum + s.response_count, 0);
+  const maxResp        = Math.max(...surveys.map(s => s.response_count || 0), 1);
   const totalPages     = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const safePage       = Math.min(currentPage, totalPages);
   const startIdx       = (safePage - 1) * PAGE_SIZE;
@@ -156,7 +157,7 @@ export default function SurveyListPage() {
               <span style={S.eyebrowDot} className="live-dot" />
               <span style={S.eyebrowText}>
                 {firstName ? `${firstName.toUpperCase()} · ` : ""}
-                {surveys.length} {surveys.length === 1 ? "PULSO" : "PULSOS"} EN GESTIÓN
+                {surveys.length} {surveys.length === 1 ? "PULSO" : "PULSOS"} EN GESTIÓN{counts.active > 0 ? ` · ${counts.active} ACTIVOS AHORA` : ""}
               </span>
             </div>
             <h1 style={S.pageTitle}>Mis pulsos</h1>
@@ -169,20 +170,51 @@ export default function SurveyListPage() {
           </button>
         </div>
 
-        {/* ── SCOPE STRIP ─── Signature element: sweep animation ─ */}
-        <div style={S.scopeStrip}>
-          {/* Sweep line — plays once on mount */}
-          <div className="scope-sweep" style={S.scopeSweep} aria-hidden="true" />
-          {/* EKG-style decorative line on top edge */}
-          <div style={S.scopeEdgeLine} aria-hidden="true" />
-
-          <ScopeItem label="Total pulsos"       value={surveys.length}  color={t.color.ink} />
-          <div style={S.scopeDivider} />
-          <ScopeItem label="Activas"            value={counts.active}   color={t.color.brand} live={counts.active > 0} />
-          <div style={S.scopeDivider} />
-          <ScopeItem label="Respuestas totales" value={totalResponses}  color="#22d3ee" />
-          <div style={S.scopeDivider} />
-          <ScopeItem label="Cerradas"           value={counts.closed}   color={t.color.mutedSoft} />
+        {/* ── STAT CARDS ─── */}
+        <div style={S.statGrid}>
+          <StatCard
+            icon={
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+              </svg>
+            }
+            value={surveys.length}
+            label="Total pulsos"
+            color={t.color.ink}
+            iconBg="rgba(255,255,255,0.07)"
+          />
+          <StatCard
+            icon={
+              <span className="live-dot" style={{ width: 9, height: 9, borderRadius: "50%", background: t.color.brand, display: "inline-block", boxShadow: "0 0 0 4px rgba(37,99,235,0.18)" }} aria-hidden="true" />
+            }
+            value={counts.active}
+            label="Activas"
+            color={t.color.brand}
+            iconBg="rgba(37,99,235,0.1)"
+          />
+          <StatCard
+            icon={
+              <svg width="22" height="14" viewBox="0 0 36 14" fill="none" aria-hidden="true">
+                <polyline points="0,12 6,8 12,10 18,4 24,7 30,2 36,5" stroke="#22d3ee" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            }
+            value={totalResponses.toLocaleString("es-CL")}
+            label="Respuestas totales"
+            color="#22d3ee"
+            iconBg="rgba(34,211,238,0.08)"
+          />
+          <StatCard
+            icon={
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            }
+            value={counts.closed}
+            label="Cerradas"
+            color="#f87171"
+            iconBg="rgba(248,113,113,0.1)"
+          />
         </div>
 
         {/* ── TOOLBAR ──────────────────────────────────────────── */}
@@ -340,10 +372,21 @@ export default function SurveyListPage() {
                       <StatusPill status={s.status} size="sm" />
                     </div>
 
-                    {/* Responses */}
-                    <div style={{ width: 130, textAlign: "right", display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 6 }}>
-                      <span style={{ ...S.rowResponseNum, color: accent }}>{s.response_count}</span>
-                      <span style={S.rowResponseLabel}>{s.response_count === 1 ? "resp." : "resp."}</span>
+                    {/* Responses + mini progress bar */}
+                    <div style={{ width: 130, paddingRight: 8 }}>
+                      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 5 }}>
+                        <span style={{ ...S.rowResponseNum, color: accent }}>{s.response_count}</span>
+                        <span style={S.rowResponseLabel}>resp.</span>
+                      </div>
+                      <div style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.06)", marginTop: 6, overflow: "hidden" }}>
+                        <div style={{
+                          height: "100%",
+                          width: `${Math.round((s.response_count / maxResp) * 100)}%`,
+                          background: s.status === "active" ? "#22d3ee" : "rgba(255,255,255,0.18)",
+                          borderRadius: 2,
+                          transition: "width 0.6s ease",
+                        }} />
+                      </div>
                     </div>
 
                     {/* Date */}
@@ -394,31 +437,49 @@ export default function SurveyListPage() {
   );
 }
 
-// ─── ScopeItem ───────────────────────────────────────────────────
-function ScopeItem({ value, label, color, live }) {
+// ─── StatCard ───────────────────────────────────────────────────
+function StatCard({ icon, value, label, color, iconBg }) {
   return (
-    <div style={{ flex: 1, padding: "30px 36px", position: "relative" }}>
+    <div style={{
+      background: t.color.surface,
+      border: "1px solid rgba(255,255,255,0.07)",
+      borderRadius: 14,
+      padding: "20px 22px",
+      display: "flex",
+      flexDirection: "column",
+      gap: 14,
+    }}>
       <div style={{
-        fontFamily: t.font.display, fontSize: 9.5, fontWeight: 700,
-        letterSpacing: "0.28em", color: t.color.mutedFaint,
-        textTransform: "uppercase", marginBottom: 12,
-        display: "flex", alignItems: "center", gap: 8,
+        width: 36, height: 36,
+        borderRadius: 10,
+        background: iconBg || "rgba(255,255,255,0.06)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color: color || t.color.ink,
+        flexShrink: 0,
       }}>
-        {live && (
-          <span style={{
-            display: "inline-block", width: 6, height: 6, borderRadius: "50%",
-            background: color, boxShadow: `0 0 0 3px ${color}25`,
-            flexShrink: 0,
-          }} className="live-dot" aria-hidden="true" />
-        )}
-        {label}
+        {icon}
       </div>
-      <div style={{
-        fontFamily: t.font.display, fontSize: 48, fontWeight: 900,
-        color: color || t.color.ink, letterSpacing: "-0.05em",
-        lineHeight: 0.92, fontVariantNumeric: "tabular-nums",
-      }}>
-        {value}
+      <div>
+        <div style={{
+          fontFamily: t.font.display,
+          fontSize: 38, fontWeight: 900,
+          color: color || t.color.ink,
+          letterSpacing: "-0.04em",
+          lineHeight: 0.95,
+          fontVariantNumeric: "tabular-nums",
+        }}>
+          {value}
+        </div>
+        <div style={{
+          fontFamily: t.font.display,
+          fontSize: 9.5, fontWeight: 700,
+          letterSpacing: "0.22em",
+          color: t.color.mutedFaint,
+          textTransform: "uppercase",
+          marginTop: 9,
+        }}>
+          {label}
+        </div>
       </div>
     </div>
   );
@@ -452,15 +513,8 @@ const CSS = `
     0%, 100% { opacity: 1;   transform: scale(1);    }
     50%       { opacity: 0.4; transform: scale(0.85); }
   }
-  @keyframes scopeSweep {
-    0%   { left: -42%; opacity: 0;   }
-    8%   { opacity: 1;               }
-    92%  { opacity: 1;               }
-    100% { left: 110%; opacity: 0;   }
-  }
 
-  .live-dot   { animation: pulseDot 2.4s ease-in-out infinite; }
-  .scope-sweep { animation: scopeSweep 2s cubic-bezier(0.4, 0, 0.6, 1) 0.6s forwards; }
+  .live-dot { animation: pulseDot 2.4s ease-in-out infinite; }
 
   /* Sidebar interactive */
   .side-link:hover  { background: rgba(37,99,235,0.09) !important; color: ${t.color.inkSoft} !important; }
@@ -700,35 +754,13 @@ const S = {
     cursor: "pointer",
   },
 
-  // ── Scope strip ──
-  scopeStrip: {
-    position: "relative",
-    display: "flex",
-    alignItems: "stretch",
-    background: "#060919",
-    borderBottom: "1px solid rgba(37,99,235,0.1)",
-    overflow: "hidden",
-  },
-  scopeSweep: {
-    position: "absolute",
-    inset: 0,
-    width: "42%",
-    background: "linear-gradient(90deg, transparent, rgba(37,99,235,0.16), transparent)",
-    pointerEvents: "none",
-    zIndex: 2,
-  },
-  scopeEdgeLine: {
-    position: "absolute",
-    top: 0, left: 0, right: 0,
-    height: 2,
-    background: "linear-gradient(90deg, rgba(37,99,235,0.55), rgba(34,211,238,0.4), rgba(37,99,235,0.08))",
-    pointerEvents: "none",
-  },
-  scopeDivider: {
-    width: 1,
-    background: "rgba(37,99,235,0.1)",
-    alignSelf: "stretch",
-    flexShrink: 0,
+  // ── Stat cards ──
+  statGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: 14,
+    padding: "24px 48px",
+    borderBottom: "1px solid rgba(37,99,235,0.08)",
   },
 
   // ── Toolbar ──
@@ -743,8 +775,8 @@ const S = {
     display: "inline-flex",
     alignItems: "center",
     gap: 8,
-    padding: "8px 14px",
-    borderRadius: 6,
+    padding: "7px 16px",
+    borderRadius: 999,
     border: "none",
     background: "transparent",
     color: t.color.muted,
@@ -761,7 +793,7 @@ const S = {
   filterBadge: {
     fontSize: 9.5, fontWeight: 700,
     padding: "2px 7px",
-    borderRadius: 4,
+    borderRadius: 999,
     letterSpacing: 0,
   },
   searchRow: {

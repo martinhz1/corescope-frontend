@@ -4,9 +4,17 @@
   box-sizing: border-box;
 }
 
+html, body {
+  background-color: #070b1a;
+}
+
 body {
   font-family: "DM Sans", system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
 }
 
 input:focus,
