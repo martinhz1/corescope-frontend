@@ -1,26 +1,25 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMySurveys, logout, getUser, updateSurvey } from "../lib/api";
-import LogoInput from "../components/LogoInput";
 import toast from "react-hot-toast";
 import Logo from "../components/Logo";
 import Footer from "../components/Footer";
 import StatusPill from "../components/StatusPill";
-import { theme as t, hairSpan, globalKeyframes } from "../lib/theme";
+import { theme as t, globalKeyframes } from "../lib/theme";
 
 export default function SurveyListPage() {
-  const [surveys, setSurveys] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all");
+  const [surveys, setSurveys]       = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [filter, setFilter]         = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [clientFilter, setClientFilter] = useState("all");
-  const [dateRange, setDateRange] = useState("all");
-  const [sortBy, setSortBy] = useState("recent");
+  const [dateRange, setDateRange]   = useState("all");
+  const [sortBy, setSortBy]         = useState("recent");
   const [currentPage, setCurrentPage] = useState(1);
-  const [mounted, setMounted] = useState(false);
-  const PAGE_SIZE = 8;
+  const [mounted, setMounted]       = useState(false);
+  const PAGE_SIZE = 12;
   const navigate = useNavigate();
-  const user = getUser();
+  const user      = getUser();
   const firstName = user.name ? user.name.split(" ")[0] : null;
 
   useEffect(() => {
@@ -31,55 +30,38 @@ export default function SurveyListPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Resetear paginación cuando cambia cualquier filtro, búsqueda o sort
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filter, searchQuery, clientFilter, dateRange, sortBy]);
+  useEffect(() => { setCurrentPage(1); }, [filter, searchQuery, clientFilter, dateRange, sortBy]);
 
-  // Lista de clientes únicos para el dropdown
   const uniqueClients = [...new Set(surveys.map(s => s.client_name).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
 
-  // Pipeline de filtros: cliente → búsqueda → fecha → estado → sort
-  const q = searchQuery.trim().toLowerCase();
-  const byClient = clientFilter === "all"
-    ? surveys
-    : surveys.filter(s => s.client_name === clientFilter);
+  const q        = searchQuery.trim().toLowerCase();
+  const byClient = clientFilter === "all" ? surveys : surveys.filter(s => s.client_name === clientFilter);
   const bySearch = q
-    ? byClient.filter(s =>
-        (s.title || "").toLowerCase().includes(q) ||
-        (s.client_name || "").toLowerCase().includes(q)
-      )
+    ? byClient.filter(s => (s.title || "").toLowerCase().includes(q) || (s.client_name || "").toLowerCase().includes(q))
     : byClient;
-  const cutoff = cutoffFor(dateRange);
-  const byDate = cutoff
-    ? bySearch.filter(s => new Date(s.created_at) >= cutoff)
-    : bySearch;
-  // El filtro "favorites" no es un status — atraviesa cualquier estado.
+  const cutoff   = cutoffFor(dateRange);
+  const byDate   = cutoff ? bySearch.filter(s => new Date(s.created_at) >= cutoff) : bySearch;
   let filtered;
-  if (filter === "favorites") filtered = byDate.filter(s => s.is_favorite);
-  else if (filter === "all") filtered = byDate;
-  else filtered = byDate.filter(s => s.status === filter);
-  const sorted = [...filtered].sort(sortComparator(sortBy));
+  if (filter === "favorites")  filtered = byDate.filter(s => s.is_favorite);
+  else if (filter === "all")   filtered = byDate;
+  else                         filtered = byDate.filter(s => s.status === filter);
+  const sorted   = [...filtered].sort(sortComparator(sortBy));
 
-  // Counts de las tarjetas superiores: totales del usuario (sin filtros aplicados)
   const counts = {
-    all: surveys.length,
+    all:    surveys.length,
     active: surveys.filter(s => s.status === "active").length,
-    draft: surveys.filter(s => s.status === "draft").length,
+    draft:  surveys.filter(s => s.status === "draft").length,
     closed: surveys.filter(s => s.status === "closed").length,
   };
-  // Counts de las tabs de estado: respetan cliente + búsqueda + fecha
   const tabCounts = {
-    all: byDate.length,
+    all:       byDate.length,
     favorites: byDate.filter(s => s.is_favorite).length,
-    active: byDate.filter(s => s.status === "active").length,
-    draft: byDate.filter(s => s.status === "draft").length,
-    closed: byDate.filter(s => s.status === "closed").length,
+    active:    byDate.filter(s => s.status === "active").length,
+    draft:     byDate.filter(s => s.status === "draft").length,
+    closed:    byDate.filter(s => s.status === "closed").length,
   };
 
-  // Toggle de favorito con actualización optimista: cambio el estado local
-  // primero (UI responde instantáneo) y reverteo si la API falla.
   const toggleFavorite = async (surveyId, e) => {
     e.stopPropagation();
     const target = surveys.find(s => s.id === surveyId);
@@ -95,1180 +77,936 @@ export default function SurveyListPage() {
   };
 
   const totalResponses = surveys.reduce((sum, s) => sum + s.response_count, 0);
+  const totalPages     = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const safePage       = Math.min(currentPage, totalPages);
+  const startIdx       = (safePage - 1) * PAGE_SIZE;
+  const paged          = sorted.slice(startIdx, startIdx + PAGE_SIZE);
 
-  // Paginación (6 por página)
-  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
-  const safePage = Math.min(currentPage, totalPages);
-  const startIdx = (safePage - 1) * PAGE_SIZE;
-  const paged = sorted.slice(startIdx, startIdx + PAGE_SIZE);
-
-  const hasActiveFilter =
-    q.length > 0 ||
-    clientFilter !== "all" ||
-    filter !== "all" ||
-    dateRange !== "all";
+  const hasActiveFilter = q.length > 0 || clientFilter !== "all" || filter !== "all" || dateRange !== "all";
   const clearAllFilters = () => {
-    setSearchQuery("");
-    setClientFilter("all");
-    setFilter("all");
-    setDateRange("all");
-    setSortBy("recent");
+    setSearchQuery(""); setClientFilter("all"); setFilter("all"); setDateRange("all"); setSortBy("recent");
   };
 
   return (
-    <div style={styles.page}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet" />
-      <style>{`
-        ${globalKeyframes}
-        @keyframes pulseDot {
-          0%, 100% { opacity: 0.7; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.1); }
-        }
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-        .survey-card {
-          transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease;
-          box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 1px 1px rgba(15,23,42,0.02);
-        }
-        .survey-card:hover {
-          transform: translateY(-4px);
-          border-color: ${t.color.brandLineHover} !important;
-          box-shadow: 0 18px 40px -16px rgba(37,99,235,0.22), 0 6px 12px -4px rgba(37,99,235,0.08);
-        }
-        .survey-card:hover .card-arrow { transform: translateX(6px); opacity: 1; }
-        .survey-card:hover .card-stripe { opacity: 1; transform: scaleX(1); }
-        .survey-card:hover .card-title { color: ${t.color.brand}; }
-        .card-stripe {
-          position: absolute; top: 0; left: 0; right: 0; height: 3px;
-          opacity: 0.65; transform: scaleX(0.6); transform-origin: left;
-          transition: opacity 0.28s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .card-title { transition: color 0.18s ease; }
-        .fav-btn:hover { background: rgba(245,158,11,0.12); transform: scale(1.15); }
-        .fav-btn { transition: all 0.18s ${t.ease}; }
-        .filter-btn { transition: all 0.15s ease; }
-        .filter-btn:hover { background: ${t.color.brandTint} !important; color: ${t.color.brand} !important; }
-        .primary-cta { transition: all 0.18s ${t.ease}; box-shadow: 0 4px 12px -4px rgba(37,99,235,0.35); }
-        .primary-cta:hover { background: ${t.color.brandHover} !important; box-shadow: 0 10px 26px -8px rgba(37,99,235,0.55); transform: translateY(-1px); }
-        .primary-cta:hover .cta-arrow { transform: translateX(3px); }
-        .ghost-cta { transition: all 0.15s ease; }
-        .ghost-cta:hover { background: ${t.color.brandTint}; border-color: ${t.color.brandLineHover}; color: ${t.color.brand}; }
-        .type-card { transition: all 0.18s ${t.ease}; }
-        .type-card:hover { border-color: ${t.color.brandBright} !important; background: rgba(37,99,235,0.04); transform: translateY(-2px); box-shadow: 0 8px 24px -12px rgba(37,99,235,0.25); }
-        @media (max-width: 600px) {
-          .type-options-grid { grid-template-columns: 1fr !important; }
-        }
-        .user-chip { transition: border-color 0.15s ease; }
-        .user-chip:hover { border-color: ${t.color.brandLineHover}; }
-        .stat-card {
-          position: relative; overflow: hidden;
-          transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.24s ease;
-          box-shadow: 0 1px 2px rgba(15,23,42,0.04);
-        }
-        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -12px rgba(37,99,235,0.18); }
-        .stat-card::before {
-          content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-          background: var(--accent, ${t.color.brand});
-        }
-        .stat-card::after {
-          content: ""; position: absolute; top: -20px; right: -20px;
-          width: 80px; height: 80px; border-radius: 50%;
-          background: var(--accent, ${t.color.brand}); opacity: 0.06;
-          pointer-events: none;
-        }
-        .live-dot { animation: pulseDot 2.4s ease-in-out infinite; }
-        .search-input:focus,
-        .select-input:focus { border-color: ${t.color.brandLineHover} !important; box-shadow: 0 0 0 3px ${t.color.brandTint}; }
-        .page-btn:not(:disabled):hover { background: ${t.color.brandTint}; border-color: ${t.color.brandLineHover}; color: ${t.color.brand}; }
-        @media (max-width: 600px) {
-          .search-row { flex-direction: column !important; }
-          .search-row > * { width: 100% !important; min-width: 0 !important; }
-        }
-        .atmosphere {
-          position: fixed; inset: 0; pointer-events: none; z-index: 0;
-          background:
-            radial-gradient(ellipse 800px 600px at 90% -10%, rgba(37,99,235,0.10), transparent 60%),
-            radial-gradient(ellipse 600px 500px at -10% 30%, rgba(37,99,235,0.06), transparent 55%);
-        }
-      `}</style>
+    <div style={S.root}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Archivo:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+      <style>{CSS}</style>
 
-      {/* Atmospheric backdrop — radial gradients suaves para dar profundidad */}
-      <div className="atmosphere" aria-hidden="true" />
-
-      {/* Top bar */}
-      <div style={styles.topBar}>
-        <div style={styles.topBarInner}>
-          <div style={styles.brandMark}>
-            <Logo variant="horizontal" size={12} color="#2563eb" />
-            <span style={styles.brandSep} />
-            <span style={styles.brandTag}>CoreScope</span>
+      {/* ─── SIDEBAR ────────────────────────────────────────── */}
+      <aside style={S.sidebar}>
+        <div style={S.sideTop}>
+          {/* Logo — prominente */}
+          <div style={S.sideLogoWrap}>
+            <Logo size={56} />
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {(user.picture || firstName) && (
-              <div className="user-chip" style={styles.userChip}>
-                {user.picture && (
-                  <img src={user.picture} alt="" style={styles.userAvatar} referrerPolicy="no-referrer" />
-                )}
-                {firstName && <span style={styles.userName}>{firstName}</span>}
+
+          {/* Nav */}
+          <nav style={S.sideNav} aria-label="Navegación principal">
+            <button style={{ ...S.sideLink, ...S.sideLinkActive }} aria-current="page">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+              </svg>
+              <span>Mis pulsos</span>
+              {surveys.length > 0 && <span style={S.sideBadge}>{surveys.length}</span>}
+            </button>
+            <button className="side-link" onClick={() => navigate("/tutorial")} style={S.sideLink}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+              <span>Guía de uso</span>
+            </button>
+          </nav>
+        </div>
+
+        <div style={{ flex: 1 }} />
+
+        {/* User row + logout */}
+        <div style={S.sideBottom}>
+          <div style={S.sideUserRow}>
+            {user.picture ? (
+              <img src={user.picture} alt="" style={S.sideAvatar} referrerPolicy="no-referrer" />
+            ) : (
+              <div style={S.sideAvatarFallback}>
+                {(firstName || user.email || "U")[0].toUpperCase()}
               </div>
             )}
-            <button className="ghost-cta" onClick={() => navigate("/tutorial")} style={styles.tutorialBtn} title="Guía de uso de la plataforma">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, opacity: 0.85 }}>
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-              </svg>
-              <span>Tutorial</span>
-            </button>
-            <button className="primary-cta" onClick={() => navigate("/surveys/new")} style={styles.createBtn}>
-              <span className="cta-arrow" style={styles.ctaArrow}>+</span>
-              <span>Crear pulso</span>
-            </button>
-            <button className="ghost-cta" onClick={logout} style={styles.logoutBtn}>Salir</button>
-          </div>
-        </div>
-      </div>
-
-      <div style={styles.content}>
-        {/* Header */}
-        <div style={{ animation: mounted ? "fadeUp 0.5s ease both" : "none", position: "relative" }}>
-          <div style={styles.metaLine}>
-            <span style={styles.metaDot} className="live-dot" />
-            <span style={styles.metaTag}>{firstName ? firstName.toUpperCase() : "CONSULTOR"}</span>
-            <span style={hairSpan} />
-            <span style={styles.metaValue}>{surveys.length} {surveys.length === 1 ? "PULSO" : "PULSOS"} EN GESTIÓN</span>
-          </div>
-          <h1 style={styles.title}>
-            Mis pulsos
-            <span style={styles.titleAccent}>.</span>
-          </h1>
-          <p style={styles.subtitle}>Gestiona tus encuestas de satisfacción organizacional.</p>
-        </div>
-
-        {/* Stats row */}
-        <div style={{ ...styles.statsRow, animation: mounted ? "fadeUp 0.5s ease 0.1s both" : "none" }}>
-          <StatCard label="Total pulsos" value={surveys.length} accent={t.color.ink} />
-          <StatCard label="Activas" value={counts.active} accent={t.color.brand} />
-          <StatCard label="Respuestas totales" value={totalResponses} accent={t.color.brandBright} />
-          <StatCard label="Cerradas" value={counts.closed} accent={t.color.danger} />
-        </div>
-
-        {/* Filter tabs */}
-        <div style={{ ...styles.filterRow, animation: mounted ? "fadeUp 0.5s ease 0.2s both" : "none" }}>
-          <span style={styles.filterLabel}>Filtrar</span>
-          {[
-            { key: "all", label: "Todas" },
-            { key: "favorites", label: "Favoritos" },
-            { key: "active", label: "Activas" },
-            { key: "draft", label: "Borradores" },
-            { key: "closed", label: "Cerradas" },
-          ].map(f => {
-            const isActive = filter === f.key;
-            return (
-              <button
-                key={f.key}
-                className="filter-btn"
-                onClick={() => setFilter(f.key)}
-                style={{
-                  ...styles.filterBtn,
-                  ...(isActive ? styles.filterBtnActive : {}),
-                }}
-              >
-                <span>{f.label}</span>
-                <span style={{
-                  ...styles.filterCount,
-                  background: isActive ? t.color.brand : "rgba(255,255,255,0.04)",
-                  color: isActive ? "#fff" : t.color.mutedSoft,
-                }}>
-                  {tabCounts[f.key]}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Toolbar: búsqueda + filtro por cliente */}
-        <div className="search-row" style={{ ...styles.searchRow, animation: mounted ? "fadeUp 0.5s ease 0.25s both" : "none" }}>
-          <div style={styles.searchInputWrap}>
-            <svg
-              width="15" height="15" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              style={styles.searchIcon}
-            >
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input
-              className="search-input"
-              type="text"
-              placeholder="Buscar por título o cliente..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={styles.searchInput}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                style={styles.searchClearBtn}
-                aria-label="Limpiar búsqueda"
-              >
-                ×
-              </button>
-            )}
-          </div>
-          <select
-            className="select-input"
-            value={clientFilter}
-            onChange={e => setClientFilter(e.target.value)}
-            style={styles.selectInput}
-          >
-            <option value="all">Todos los clientes</option>
-            {uniqueClients.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-          <select
-            className="select-input"
-            value={dateRange}
-            onChange={e => setDateRange(e.target.value)}
-            style={styles.selectInput}
-            title="Filtrar por fecha de creación"
-          >
-            <option value="all">Todas las fechas</option>
-            <option value="7">Últimos 7 días</option>
-            <option value="30">Últimos 30 días</option>
-            <option value="90">Últimos 90 días</option>
-            <option value="year">Este año</option>
-          </select>
-          <select
-            className="select-input"
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value)}
-            style={styles.selectInput}
-            title="Ordenar"
-          >
-            <option value="recent">Más recientes</option>
-            <option value="oldest">Más antiguos</option>
-            <option value="responses">Más respuestas</option>
-            <option value="alpha-asc">Alfabético A–Z</option>
-            <option value="alpha-desc">Alfabético Z–A</option>
-          </select>
-        </div>
-
-        {/* Content */}
-        {loading ? (
-          <div style={styles.loadingState}>
-            <div style={styles.spinner} />
-            <p style={{ color: "#999999", fontSize: 14, marginTop: 16 }}>Cargando pulsos...</p>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ ...styles.emptyState, animation: "fadeIn 0.4s ease both" }}>
-            <div style={styles.emptyTag}>
-              <span style={hairSpan} />
-              <span>{hasActiveFilter ? "SIN RESULTADOS" : "VACÍO"}</span>
-              <span style={hairSpan} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={S.sideUserName}>{firstName || "Usuario"}</div>
+              <div style={S.sideUserEmail}>{user.email || ""}</div>
             </div>
-            <p style={styles.emptyTitle}>
-              {hasActiveFilter
-                ? "No se encontraron pulsos con esos filtros"
-                : "No tienes pulsos todavía"}
-            </p>
-            <p style={styles.emptySubtitle}>
-              {hasActiveFilter
-                ? "Ajusta o limpia los filtros para ver más resultados."
-                : "Crea tu primer pulso de satisfacción y empieza a medir."}
-            </p>
-            {hasActiveFilter ? (
-              <button className="ghost-cta" onClick={clearAllFilters} style={styles.clearFiltersBtn}>
-                Limpiar filtros
-              </button>
-            ) : (
-              <button className="primary-cta" onClick={() => navigate("/surveys/new")} style={styles.createBtn}>
-                <span className="cta-arrow" style={styles.ctaArrow}>+</span>
-                <span>Crear pulso</span>
-              </button>
-            )}
           </div>
-        ) : (
-          <div style={styles.grid}>
-            {paged.map((s, idx) => {
-              const accent = s.primary_color || t.color.brand;
+          <button className="side-logout" onClick={logout} style={S.sideLogout}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Salir
+          </button>
+        </div>
+      </aside>
+
+      {/* ─── MAIN ────────────────────────────────────────────── */}
+      <main style={S.main}>
+
+        {/* Page header */}
+        <div style={S.pageHeader}>
+          <div style={{ animation: mounted ? "fadeUp 0.45s ease both" : "none" }}>
+            <div style={S.eyebrow}>
+              <span style={S.eyebrowDot} className="live-dot" />
+              <span style={S.eyebrowText}>
+                {firstName ? `${firstName.toUpperCase()} · ` : ""}
+                {surveys.length} {surveys.length === 1 ? "PULSO" : "PULSOS"} EN GESTIÓN
+              </span>
+            </div>
+            <h1 style={S.pageTitle}>Mis pulsos</h1>
+          </div>
+          <button className="create-btn" onClick={() => navigate("/surveys/new")} style={S.createBtn}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Crear pulso
+          </button>
+        </div>
+
+        {/* ── SCOPE STRIP ─── Signature element: sweep animation ─ */}
+        <div style={S.scopeStrip}>
+          {/* Sweep line — plays once on mount */}
+          <div className="scope-sweep" style={S.scopeSweep} aria-hidden="true" />
+          {/* EKG-style decorative line on top edge */}
+          <div style={S.scopeEdgeLine} aria-hidden="true" />
+
+          <ScopeItem label="Total pulsos"       value={surveys.length}  color={t.color.ink} />
+          <div style={S.scopeDivider} />
+          <ScopeItem label="Activas"            value={counts.active}   color={t.color.brand} live={counts.active > 0} />
+          <div style={S.scopeDivider} />
+          <ScopeItem label="Respuestas totales" value={totalResponses}  color="#22d3ee" />
+          <div style={S.scopeDivider} />
+          <ScopeItem label="Cerradas"           value={counts.closed}   color={t.color.mutedSoft} />
+        </div>
+
+        {/* ── TOOLBAR ──────────────────────────────────────────── */}
+        <div style={{ animation: mounted ? "fadeUp 0.5s ease 0.12s both" : "none" }}>
+          {/* Status filter tabs */}
+          <div style={S.filterRow}>
+            {[
+              { key: "all",       label: "Todas"      },
+              { key: "favorites", label: "Favoritas"  },
+              { key: "active",    label: "Activas"    },
+              { key: "draft",     label: "Borradores" },
+              { key: "closed",    label: "Cerradas"   },
+            ].map(f => {
+              const on = filter === f.key;
               return (
-                <div
-                  key={s.id}
-                  className="survey-card"
-                  onClick={() => navigate(`/surveys/${s.id}`)}
-                  style={{
-                    ...styles.card,
-                    animation: `fadeUp 0.4s ease ${0.05 * idx}s both`,
-                  }}
+                <button
+                  key={f.key}
+                  className="filter-btn"
+                  onClick={() => setFilter(f.key)}
+                  aria-pressed={on}
+                  style={{ ...S.filterBtn, ...(on ? S.filterBtnOn : {}) }}
                 >
-                  {/* Top stripe con el color del survey */}
-                  <span className="card-stripe" style={{ background: accent }} aria-hidden="true" />
-
-                  <button
-                    type="button"
-                    className="fav-btn"
-                    onClick={e => toggleFavorite(s.id, e)}
-                    aria-label={s.is_favorite ? "Quitar de favoritos" : "Marcar como favorito"}
-                    title={s.is_favorite ? "Quitar de favoritos" : "Marcar como favorito"}
-                    style={{
-                      ...styles.favBtn,
-                      color: s.is_favorite ? "#f59e0b" : t.color.mutedFaint,
-                    }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill={s.is_favorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                    </svg>
-                  </button>
-
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, gap: 12, paddingRight: 36 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <h3 className="card-title" style={styles.cardTitle}>{s.title}</h3>
-                      <p style={styles.cardClient}>
-                        <span style={{ ...styles.cardClientDot, background: accent }} aria-hidden="true" />
-                        {s.client_name}
-                      </p>
-                    </div>
-                    <StatusPill status={s.status} size="sm" />
-                  </div>
-
-                  <div style={styles.cardFooter}>
-                    <div style={styles.responseStat}>
-                      <span style={{ ...styles.responseValue, color: accent }}>{s.response_count}</span>
-                      <span style={styles.responseLabel}>
-                        {s.response_count === 1 ? "respuesta" : "respuestas"}
-                      </span>
-                    </div>
-                    <span style={styles.cardDate}>
-                      {new Date(s.created_at).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}
-                    </span>
-                    <span className="card-arrow" style={{ ...styles.cardArrow, color: accent }}>→</span>
-                  </div>
-                </div>
+                  {f.label}
+                  <span style={{
+                    ...S.filterBadge,
+                    background: on ? t.color.brand              : "rgba(255,255,255,0.05)",
+                    color:      on ? "#fff"                     : t.color.mutedFaint,
+                  }}>
+                    {tabCounts[f.key]}
+                  </span>
+                </button>
               );
             })}
-          </div>
-        )}
 
-        {/* Paginación */}
-        {!loading && totalPages > 1 && (
-          <div style={styles.paginationRow}>
-            <button
-              type="button"
-              className="page-btn"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={safePage === 1}
-              style={{
-                ...styles.pageBtn,
-                ...(safePage === 1 ? styles.pageBtnDisabled : {}),
-              }}
-            >
-              ← Anterior
-            </button>
-            <span style={styles.pageInfo}>
-              Página {safePage} de {totalPages}
-            </span>
-            <button
-              type="button"
-              className="page-btn"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={safePage === totalPages}
-              style={{
-                ...styles.pageBtn,
-                ...(safePage === totalPages ? styles.pageBtnDisabled : {}),
-              }}
-            >
-              Siguiente →
-            </button>
+            {hasActiveFilter && (
+              <button className="filter-btn" onClick={clearAllFilters} style={{ ...S.filterBtn, marginLeft: 8, color: t.color.danger }}>
+                Limpiar filtros
+              </button>
+            )}
           </div>
-        )}
-      </div>
 
-      <Footer />
+          {/* Search + selects */}
+          <div style={S.searchRow}>
+            <div style={{ position: "relative", flex: "1 1 0", minWidth: 200 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: t.color.mutedSoft, pointerEvents: "none" }} aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input
+                className="search-input"
+                type="text"
+                placeholder="Buscar por título u organización..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                style={S.searchInput}
+                aria-label="Buscar encuestas"
+              />
+              {searchQuery && (
+                <button type="button" onClick={() => setSearchQuery("")} style={S.searchClear} aria-label="Limpiar búsqueda">×</button>
+              )}
+            </div>
+            {uniqueClients.length > 0 && (
+              <select className="sel-input" value={clientFilter} onChange={e => setClientFilter(e.target.value)} style={S.selInput} aria-label="Filtrar por organización">
+                <option value="all">Todas las organizaciones</option>
+                {uniqueClients.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            )}
+            <select className="sel-input" value={dateRange} onChange={e => setDateRange(e.target.value)} style={S.selInput} aria-label="Filtrar por fecha">
+              <option value="all">Todas las fechas</option>
+              <option value="7">Últimos 7 días</option>
+              <option value="30">Últimos 30 días</option>
+              <option value="90">Últimos 90 días</option>
+              <option value="year">Este año</option>
+            </select>
+            <select className="sel-input" value={sortBy} onChange={e => setSortBy(e.target.value)} style={S.selInput} aria-label="Ordenar encuestas">
+              <option value="recent">Más recientes</option>
+              <option value="oldest">Más antiguos</option>
+              <option value="responses">Más respuestas</option>
+              <option value="alpha-asc">A–Z</option>
+              <option value="alpha-desc">Z–A</option>
+            </select>
+          </div>
+        </div>
+
+        {/* ── CONTENT ──────────────────────────────────────────── */}
+        <div style={S.contentArea}>
+          {loading ? (
+            <div style={S.loadingWrap}>
+              <div style={S.spinner} />
+              <p style={{ color: t.color.mutedSoft, fontSize: 13, marginTop: 16 }}>Cargando pulsos...</p>
+            </div>
+
+          ) : filtered.length === 0 ? (
+            <div style={S.emptyWrap}>
+              <div style={S.emptyIcon}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="12" y1="13" x2="12" y2="17"/><line x1="10" y1="15" x2="14" y2="15"/>
+                </svg>
+              </div>
+              <p style={S.emptyTitle}>{hasActiveFilter ? "Sin resultados" : "Sin pulsos todavía"}</p>
+              <p style={S.emptyDesc}>{hasActiveFilter ? "Ajusta los filtros para ver más resultados." : "Crea tu primer pulso de satisfacción y empieza a medir."}</p>
+              {hasActiveFilter ? (
+                <button className="ghost-btn" onClick={clearAllFilters} style={S.ghostBtn}>Limpiar filtros</button>
+              ) : (
+                <button className="create-btn" onClick={() => navigate("/surveys/new")} style={S.createBtn}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  Crear pulso
+                </button>
+              )}
+            </div>
+
+          ) : (
+            <div style={S.list} role="list">
+              {/* Table header */}
+              <div style={S.listHeader} aria-hidden="true">
+                <span style={{ flex: "1 1 0", paddingLeft: 24 }}>Pulso</span>
+                <span style={{ width: 110, textAlign: "center" }}>Estado</span>
+                <span style={{ width: 130, textAlign: "right" }}>Respuestas</span>
+                <span style={{ width: 130, textAlign: "right" }}>Creado</span>
+                <span style={{ width: 64 }} />
+              </div>
+
+              {paged.map((s, idx) => {
+                const accent = s.primary_color || t.color.brand;
+                return (
+                  <div
+                    key={s.id}
+                    role="listitem"
+                    className="survey-row"
+                    onClick={() => navigate(`/surveys/${s.id}`)}
+                    style={{ ...S.surveyRow, animation: `fadeUp 0.32s ease ${idx * 0.035}s both` }}
+                    tabIndex={0}
+                    onKeyDown={e => e.key === "Enter" && navigate(`/surveys/${s.id}`)}
+                    aria-label={`Pulso: ${s.title}`}
+                  >
+                    {/* Left color accent */}
+                    <div style={{ ...S.rowAccent, background: accent }} aria-hidden="true" />
+
+                    {/* Title + org */}
+                    <div style={{ flex: "1 1 0", minWidth: 0, paddingLeft: 20, paddingRight: 16 }}>
+                      <div className="row-title" style={S.rowTitle}>{s.title}</div>
+                      {s.client_name && (
+                        <div style={S.rowOrg}>
+                          <span style={{ ...S.rowOrgDot, background: accent }} aria-hidden="true" />
+                          {s.client_name}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Status */}
+                    <div style={{ width: 110, display: "flex", justifyContent: "center", alignItems: "center" }}>
+                      <StatusPill status={s.status} size="sm" />
+                    </div>
+
+                    {/* Responses */}
+                    <div style={{ width: 130, textAlign: "right", display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 6 }}>
+                      <span style={{ ...S.rowResponseNum, color: accent }}>{s.response_count}</span>
+                      <span style={S.rowResponseLabel}>{s.response_count === 1 ? "resp." : "resp."}</span>
+                    </div>
+
+                    {/* Date */}
+                    <div style={{ width: 130, textAlign: "right" }}>
+                      <span style={S.rowDate}>
+                        {new Date(s.created_at).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}
+                      </span>
+                    </div>
+
+                    {/* Actions */}
+                    <div style={{ width: 64, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, paddingRight: 16 }}>
+                      <button
+                        type="button"
+                        className="fav-btn"
+                        onClick={e => toggleFavorite(s.id, e)}
+                        aria-label={s.is_favorite ? "Quitar de favoritos" : "Marcar como favorito"}
+                        style={{ ...S.favBtn, color: s.is_favorite ? "#f59e0b" : t.color.mutedFaint }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill={s.is_favorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                      </button>
+                      <span className="row-arrow" style={S.rowArrow} aria-hidden="true">→</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {!loading && totalPages > 1 && (
+            <div style={S.pageRow}>
+              <button className="page-btn" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePage === 1} style={{ ...S.pageBtn, ...(safePage === 1 ? S.pageBtnDis : {}) }}>
+                ← Anterior
+              </button>
+              <span style={S.pageInfo}>Página {safePage} de {totalPages}</span>
+              <button className="page-btn" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} style={{ ...S.pageBtn, ...(safePage === totalPages ? S.pageBtnDis : {}) }}>
+                Siguiente →
+              </button>
+            </div>
+          )}
+        </div>
+
+        <Footer />
+      </main>
     </div>
   );
 }
 
-function StatCard({ label, value, accent }) {
+// ─── ScopeItem ───────────────────────────────────────────────────
+function ScopeItem({ value, label, color, live }) {
   return (
-    <div className="stat-card" style={{ ...styles.statCard, "--accent": accent }}>
-      <div style={styles.statLabel}>{label}</div>
-      <div style={{ ...styles.statValue, color: accent }}>{value}</div>
+    <div style={{ flex: 1, padding: "30px 36px", position: "relative" }}>
+      <div style={{
+        fontFamily: t.font.display, fontSize: 9.5, fontWeight: 700,
+        letterSpacing: "0.28em", color: t.color.mutedFaint,
+        textTransform: "uppercase", marginBottom: 12,
+        display: "flex", alignItems: "center", gap: 8,
+      }}>
+        {live && (
+          <span style={{
+            display: "inline-block", width: 6, height: 6, borderRadius: "50%",
+            background: color, boxShadow: `0 0 0 3px ${color}25`,
+            flexShrink: 0,
+          }} className="live-dot" aria-hidden="true" />
+        )}
+        {label}
+      </div>
+      <div style={{
+        fontFamily: t.font.display, fontSize: 48, fontWeight: 900,
+        color: color || t.color.ink, letterSpacing: "-0.05em",
+        lineHeight: 0.92, fontVariantNumeric: "tabular-nums",
+      }}>
+        {value}
+      </div>
     </div>
   );
 }
 
+// ─── helpers ─────────────────────────────────────────────────────
 function sortComparator(key) {
   switch (key) {
-    case "oldest":
-      return (a, b) => new Date(a.created_at) - new Date(b.created_at);
-    case "responses":
-      return (a, b) => (b.response_count || 0) - (a.response_count || 0);
-    case "alpha-asc":
-      return (a, b) => (a.title || "").localeCompare(b.title || "", "es", { sensitivity: "base" });
-    case "alpha-desc":
-      return (a, b) => (b.title || "").localeCompare(a.title || "", "es", { sensitivity: "base" });
+    case "oldest":     return (a, b) => new Date(a.created_at) - new Date(b.created_at);
+    case "responses":  return (a, b) => (b.response_count || 0) - (a.response_count || 0);
+    case "alpha-asc":  return (a, b) => (a.title || "").localeCompare(b.title || "", "es", { sensitivity: "base" });
+    case "alpha-desc": return (a, b) => (b.title || "").localeCompare(a.title || "", "es", { sensitivity: "base" });
     case "recent":
-    default:
-      return (a, b) => new Date(b.created_at) - new Date(a.created_at);
+    default:           return (a, b) => new Date(b.created_at) - new Date(a.created_at);
   }
 }
 
 function cutoffFor(range) {
-  if (range === "all") return null;
+  if (range === "all")  return null;
   if (range === "year") return new Date(new Date().getFullYear(), 0, 1);
   const days = parseInt(range, 10);
   if (!Number.isFinite(days)) return null;
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d;
+  const d = new Date(); d.setDate(d.getDate() - days); return d;
 }
 
-const styles = {
-  page: {
+// ─── CSS ─────────────────────────────────────────────────────────
+const CSS = `
+  ${globalKeyframes}
+
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1;   transform: scale(1);    }
+    50%       { opacity: 0.4; transform: scale(0.85); }
+  }
+  @keyframes scopeSweep {
+    0%   { left: -42%; opacity: 0;   }
+    8%   { opacity: 1;               }
+    92%  { opacity: 1;               }
+    100% { left: 110%; opacity: 0;   }
+  }
+
+  .live-dot   { animation: pulseDot 2.4s ease-in-out infinite; }
+  .scope-sweep { animation: scopeSweep 2s cubic-bezier(0.4, 0, 0.6, 1) 0.6s forwards; }
+
+  /* Sidebar interactive */
+  .side-link:hover  { background: rgba(37,99,235,0.09) !important; color: ${t.color.inkSoft} !important; }
+  .side-logout:hover { background: rgba(248,113,113,0.08) !important; color: #f87171 !important; border-color: rgba(248,113,113,0.25) !important; }
+
+  /* Create button */
+  .create-btn { transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.15s ease; box-shadow: 0 4px 14px -4px rgba(37,99,235,0.35); }
+  .create-btn:hover { background: ${t.color.brandHover} !important; transform: translateY(-1px); box-shadow: 0 10px 28px -8px rgba(37,99,235,0.55) !important; }
+
+  /* Filter chips */
+  .filter-btn { transition: all 0.14s ease; }
+  .filter-btn:hover { background: rgba(37,99,235,0.08) !important; color: ${t.color.inkSoft} !important; }
+
+  /* Search/select inputs */
+  .search-input:focus, .sel-input:focus {
+    border-color: rgba(37,99,235,0.5) !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    outline: none;
+  }
+
+  /* Survey rows */
+  .survey-row { transition: background 0.16s ease; position: relative; }
+  .survey-row:hover { background: rgba(37,99,235,0.055) !important; }
+  .survey-row:hover .row-title { color: ${t.color.brand} !important; }
+  .survey-row:hover .row-arrow { opacity: 1 !important; transform: translateX(5px) !important; }
+  .survey-row:focus-visible { outline: 2px solid ${t.color.brand}; outline-offset: -2px; }
+
+  .row-title { transition: color 0.15s ease; }
+  .row-arrow { transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.16,1,0.3,1); }
+
+  /* Fav button */
+  .fav-btn { transition: color 0.15s ease, transform 0.18s ease; }
+  .fav-btn:hover { color: #f59e0b !important; transform: scale(1.22); }
+
+  .ghost-btn:hover { border-color: rgba(37,99,235,0.5) !important; color: ${t.color.brand} !important; }
+
+  /* Pagination */
+  .page-btn:not(:disabled):hover { background: rgba(37,99,235,0.08) !important; border-color: rgba(37,99,235,0.4) !important; color: ${t.color.brand} !important; }
+`;
+
+// ─── Styles ──────────────────────────────────────────────────────
+const S = {
+  // Root — sidebar + main flex layout
+  root: {
+    display: "flex",
     minHeight: "100vh",
+    background: t.color.paper,
     fontFamily: t.font.body,
     color: t.color.inkSoft,
-    ...t.blueprintBg,
   },
 
-  // ── Top bar ──
-  topBar: {
-    background: t.color.surface,
-    borderBottom: t.hairline,
+  // ── Sidebar ──
+  sidebar: {
+    width: 240,
+    flexShrink: 0,
+    height: "100vh",
     position: "sticky",
     top: 0,
-    zIndex: 10,
-    boxShadow: "0 1px 0 0 rgba(37,99,235,0.04)",
-  },
-  topBarInner: {
-    maxWidth: 1400,
-    margin: "0 auto",
-    padding: "14px 24px",
+    background: "#060919",
+    borderRight: "1px solid rgba(37,99,235,0.12)",
     display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "column",
+    overflow: "hidden",
+    zIndex: 20,
   },
-  brandMark: {
+  sideTop: {
     display: "flex",
-    alignItems: "center",
-    gap: 12,
+    flexDirection: "column",
   },
-  brandSep: {
-    width: 1,
-    height: 14,
-    background: "rgba(37,99,235,0.22)",
-    display: "inline-block",
+  sideLogoWrap: {
+    padding: "28px 24px 22px",
+    borderBottom: "1px solid rgba(37,99,235,0.08)",
+    marginBottom: 8,
   },
-  brandTag: {
-    fontFamily: t.font.display,
-    fontSize: 10,
-    fontWeight: 600,
-    letterSpacing: t.track.widest,
-    color: t.color.brand,
-    textTransform: "uppercase",
+  sideNav: {
+    padding: "4px 10px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 2,
   },
-  brandDot: {  // legacy — sin uso
-    width: 10, height: 10, borderRadius: "50%",
-    background: "linear-gradient(135deg, #2563eb, #2563eb)",
-  },
-  brandText: { fontSize: 15, fontWeight: 700, color: "#e2e8f0", letterSpacing: "-0.3px" },
-
-  userChip: {
+  sideLink: {
     display: "flex",
     alignItems: "center",
-    gap: 8,
-    padding: "3px 11px 3px 3px",
-    borderRadius: t.radius.sharp,
-    background: t.color.brandTint,
-    border: `1px solid ${t.color.brandLine}`,
-    marginRight: 4,
-  },
-  userAvatar: {
-    width: 26, height: 26,
-    borderRadius: "50%",
-    objectFit: "cover",
-  },
-  userName: {
+    gap: 10,
+    padding: "10px 12px",
+    borderRadius: 6,
+    border: "none",
+    background: "transparent",
+    color: t.color.muted,
     fontFamily: t.font.display,
     fontSize: 11,
     fontWeight: 600,
-    letterSpacing: t.track.wide,
-    color: t.color.brand,
+    letterSpacing: "0.1em",
     textTransform: "uppercase",
+    cursor: "pointer",
+    textAlign: "left",
+    width: "100%",
+  },
+  sideLinkActive: {
+    background: "rgba(37,99,235,0.12)",
+    color: t.color.brand,
+  },
+  sideBadge: {
+    marginLeft: "auto",
+    fontSize: 9.5,
+    fontWeight: 700,
+    padding: "2px 7px",
+    borderRadius: 999,
+    background: "rgba(37,99,235,0.2)",
+    color: t.color.brand,
+    letterSpacing: "0.02em",
+  },
+  sideBottom: {
+    padding: "14px 10px",
+    borderTop: "1px solid rgba(37,99,235,0.08)",
+  },
+  sideUserRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "8px 12px 12px",
+  },
+  sideAvatar: {
+    width: 32, height: 32,
+    borderRadius: "50%",
+    objectFit: "cover",
+    flexShrink: 0,
+    border: "2px solid rgba(37,99,235,0.2)",
+  },
+  sideAvatarFallback: {
+    width: 32, height: 32,
+    borderRadius: "50%",
+    background: "rgba(37,99,235,0.18)",
+    color: t.color.brand,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontFamily: t.font.display,
+    fontSize: 14, fontWeight: 700,
+    flexShrink: 0,
+  },
+  sideUserName: {
+    fontFamily: t.font.display,
+    fontSize: 12.5, fontWeight: 700,
+    color: t.color.ink,
+    letterSpacing: "-0.01em",
+    lineHeight: 1.2,
+  },
+  sideUserEmail: {
+    fontFamily: t.font.body,
+    fontSize: 10.5,
+    color: t.color.mutedSoft,
+    marginTop: 2,
+    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+    maxWidth: 164,
+  },
+  sideLogout: {
+    display: "flex",
+    alignItems: "center",
+    gap: 9,
+    width: "100%",
+    padding: "9px 12px",
+    borderRadius: 6,
+    border: "1px solid rgba(255,255,255,0.07)",
+    background: "transparent",
+    color: t.color.mutedSoft,
+    fontFamily: t.font.display,
+    fontSize: 10.5, fontWeight: 600,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    cursor: "pointer",
+    transition: "all 0.15s ease",
+  },
+
+  // ── Main ──
+  main: {
+    flex: 1,
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+    backgroundImage:
+      "linear-gradient(rgba(37,99,235,0.025) 1px, transparent 1px)," +
+      "linear-gradient(90deg, rgba(37,99,235,0.025) 1px, transparent 1px)",
+    backgroundSize: "40px 40px",
+  },
+
+  // Page header
+  pageHeader: {
+    display: "flex",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    padding: "52px 48px 40px",
+    borderBottom: "1px solid rgba(37,99,235,0.08)",
+    flexWrap: "wrap",
+    gap: 20,
+  },
+  eyebrow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 14,
+  },
+  eyebrowDot: {
+    width: 7, height: 7,
+    borderRadius: "50%",
+    background: t.color.brand,
+    boxShadow: "0 0 0 3px rgba(37,99,235,0.2)",
+    display: "inline-block",
+    flexShrink: 0,
+  },
+  eyebrowText: {
+    fontFamily: t.font.display,
+    fontSize: 9.5, fontWeight: 700,
+    letterSpacing: "0.3em",
+    color: t.color.mutedSoft,
+    textTransform: "uppercase",
+  },
+  pageTitle: {
+    fontFamily: t.font.display,
+    fontSize: 56, fontWeight: 900,
+    margin: 0,
+    color: t.color.ink,
+    letterSpacing: "-0.04em",
+    lineHeight: 0.95,
   },
   createBtn: {
     display: "inline-flex",
     alignItems: "center",
     gap: 10,
-    padding: "10px 20px",
-    borderRadius: t.radius.sharp,
+    padding: "13px 24px",
+    borderRadius: 6,
     border: "none",
     background: t.color.brand,
     color: "#fff",
     fontFamily: t.font.display,
-    fontSize: 11,
-    fontWeight: 700,
-    letterSpacing: t.track.wider,
-    textTransform: "uppercase",
-    cursor: "pointer",
-  },
-  ctaArrow: {
-    fontFamily: t.font.display,
-    fontSize: 14,
-    color: "#5fd6d6",
-    lineHeight: 1,
-    display: "inline-block",
-    transition: `transform 0.2s ${t.ease}`,
-  },
-  logoutBtn: {
-    padding: "10px 16px",
-    borderRadius: t.radius.sharp,
-    border: `1px solid ${t.color.brandLine}`,
-    background: "transparent",
-    color: t.color.muted,
-    fontFamily: t.font.display,
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: t.track.wider,
-    textTransform: "uppercase",
-    cursor: "pointer",
-  },
-  tutorialBtn: {
-    display: "inline-flex",
-    alignItems: "center",
-    padding: "10px 14px",
-    borderRadius: t.radius.sharp,
-    border: `1px solid ${t.color.brandLine}`,
-    background: "transparent",
-    color: t.color.muted,
-    fontFamily: t.font.display,
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: t.track.wider,
+    fontSize: 11, fontWeight: 700,
+    letterSpacing: "0.18em",
     textTransform: "uppercase",
     cursor: "pointer",
   },
 
-  // ── Content ──
-  content: {
-    maxWidth: 1400,
-    margin: "0 auto",
-    padding: "56px 24px 32px",
+  // ── Scope strip ──
+  scopeStrip: {
     position: "relative",
-    zIndex: 1,
-  },
-
-  metaLine: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 18,
-    flexWrap: "wrap",
-  },
-  metaDot: {
-    width: 8,
-    height: 8,
-    borderRadius: "50%",
-    background: t.color.brandBright,
-    boxShadow: "0 0 0 4px rgba(37,99,235,0.15)",
-    display: "inline-block",
-  },
-  metaTag: {
-    fontFamily: t.font.display,
-    fontSize: 10.5,
-    fontWeight: 700,
-    letterSpacing: t.track.technical,
-    color: t.color.brand,
-    textTransform: "uppercase",
-  },
-  metaValue: {
-    fontFamily: t.font.display,
-    fontSize: 10.5,
-    fontWeight: 600,
-    letterSpacing: t.track.widest,
-    color: t.color.mutedSoft,
-    textTransform: "uppercase",
-  },
-  title: {
-    fontFamily: t.font.display,
-    fontSize: 60,
-    fontWeight: 800,
-    margin: 0,
-    color: t.color.ink,
-    letterSpacing: "-0.035em",
-    lineHeight: 0.98,
     display: "flex",
-    alignItems: "baseline",
-    gap: 2,
-  },
-  titleAccent: {
-    color: t.color.brandBright,
-    fontSize: 64,
-    lineHeight: 0.98,
-  },
-  subtitle: {
-    fontSize: 17,
-    color: t.color.mutedSoft,
-    margin: "14px 0 0",
-    fontFamily: t.font.body,
-    maxWidth: 540,
-    lineHeight: 1.5,
-  },
-
-  // ── Stats ──
-  statsRow: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: 16,
-    margin: "40px 0 36px",
-  },
-  statCard: {
-    background: `linear-gradient(135deg, ${t.color.surface} 0%, rgba(255,255,255,0.6) 100%)`,
-    borderRadius: 12,
-    padding: "22px 22px 22px 28px",
-    border: t.hairline,
-    position: "relative",
+    alignItems: "stretch",
+    background: "#060919",
+    borderBottom: "1px solid rgba(37,99,235,0.1)",
     overflow: "hidden",
   },
-  statNum: {
-    fontFamily: t.font.display,
-    fontSize: 9,
-    fontWeight: 700,
-    letterSpacing: t.track.technical,
-    color: t.color.mutedFaint,
-    marginBottom: 8,
+  scopeSweep: {
+    position: "absolute",
+    inset: 0,
+    width: "42%",
+    background: "linear-gradient(90deg, transparent, rgba(37,99,235,0.16), transparent)",
+    pointerEvents: "none",
+    zIndex: 2,
   },
-  statLabel: {
-    fontFamily: t.font.display,
-    fontSize: 10.5,
-    fontWeight: 700,
-    letterSpacing: t.track.widest,
-    color: t.color.mutedSoft,
-    textTransform: "uppercase",
-    marginBottom: 12,
+  scopeEdgeLine: {
+    position: "absolute",
+    top: 0, left: 0, right: 0,
+    height: 2,
+    background: "linear-gradient(90deg, rgba(37,99,235,0.55), rgba(34,211,238,0.4), rgba(37,99,235,0.08))",
+    pointerEvents: "none",
   },
-  statValue: {
-    fontFamily: t.font.display,
-    fontSize: 44,
-    fontWeight: 800,
-    lineHeight: 0.95,
-    letterSpacing: "-0.04em",
+  scopeDivider: {
+    width: 1,
+    background: "rgba(37,99,235,0.1)",
+    alignSelf: "stretch",
+    flexShrink: 0,
   },
 
-  // ── Filters ──
+  // ── Toolbar ──
   filterRow: {
     display: "flex",
     alignItems: "center",
-    gap: 4,
-    marginBottom: 22,
-    background: t.color.surface,
-    padding: 5,
-    borderRadius: 10,
-    border: t.hairlineSoft,
-    width: "fit-content",
-    boxShadow: "0 1px 2px rgba(15,23,42,0.04)",
-  },
-  filterLabel: {
-    fontFamily: t.font.display,
-    fontSize: 9,
-    fontWeight: 700,
-    letterSpacing: t.track.technical,
-    color: t.color.mutedSoft,
-    textTransform: "uppercase",
-    padding: "0 12px 0 10px",
-    borderRight: t.hairlineSoft,
+    gap: 2,
+    padding: "28px 48px 12px",
+    flexWrap: "wrap",
   },
   filterBtn: {
     display: "inline-flex",
     alignItems: "center",
     gap: 8,
-    padding: "7px 14px",
-    borderRadius: t.radius.sharp,
+    padding: "8px 14px",
+    borderRadius: 6,
     border: "none",
     background: "transparent",
     color: t.color.muted,
     fontFamily: t.font.display,
-    fontSize: 10.5,
-    fontWeight: 600,
-    letterSpacing: t.track.wide,
+    fontSize: 10.5, fontWeight: 600,
+    letterSpacing: "0.12em",
     textTransform: "uppercase",
     cursor: "pointer",
   },
-  filterBtnActive: {
-    background: t.color.brandTint,
+  filterBtnOn: {
+    background: "rgba(37,99,235,0.12)",
     color: t.color.brand,
-    fontWeight: 700,
   },
-  filterCount: {
-    fontFamily: t.font.display,
-    fontSize: 9.5,
-    fontWeight: 700,
+  filterBadge: {
+    fontSize: 9.5, fontWeight: 700,
     padding: "2px 7px",
-    borderRadius: t.radius.sharp,
-    minWidth: 18,
-    textAlign: "center",
-    letterSpacing: t.track.normal,
+    borderRadius: 4,
+    letterSpacing: 0,
   },
-
-  // ── Toolbar de búsqueda + cliente ──
   searchRow: {
     display: "flex",
-    alignItems: "stretch",
     gap: 10,
-    marginBottom: 18,
+    padding: "0 48px 24px",
     flexWrap: "wrap",
-  },
-  searchInputWrap: {
-    position: "relative",
-    flex: "1 1 280px",
-    minWidth: 240,
-  },
-  searchIcon: {
-    position: "absolute",
-    left: 14,
-    top: "50%",
-    transform: "translateY(-50%)",
-    color: t.color.mutedSoft,
-    pointerEvents: "none",
   },
   searchInput: {
     width: "100%",
-    padding: "11px 36px 11px 38px",
+    padding: "11px 36px 11px 40px",
     background: t.color.surface,
-    border: `1px solid ${t.color.brandLine}`,
-    borderRadius: t.radius.sharp,
+    border: "1px solid rgba(37,99,235,0.18)",
+    borderRadius: 6,
     fontFamily: t.font.body,
-    fontSize: 14,
+    fontSize: 13.5,
     color: t.color.ink,
     outline: "none",
     boxSizing: "border-box",
-    transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+    transition: "border-color 0.15s, box-shadow 0.15s",
   },
-  searchClearBtn: {
+  searchClear: {
     position: "absolute",
-    right: 6,
-    top: "50%",
+    right: 8, top: "50%",
     transform: "translateY(-50%)",
-    background: "transparent",
-    border: "none",
+    background: "transparent", border: "none",
     cursor: "pointer",
     color: t.color.muted,
-    fontSize: 22,
-    lineHeight: 1,
-    padding: "2px 8px",
-    borderRadius: 4,
+    fontSize: 20, lineHeight: 1,
+    padding: "2px 8px", borderRadius: 4,
   },
-  selectInput: {
+  selInput: {
     flex: "0 0 auto",
-    minWidth: 180,
+    minWidth: 160,
     padding: "11px 14px",
     background: t.color.surface,
-    border: `1px solid ${t.color.brandLine}`,
-    borderRadius: t.radius.sharp,
+    border: "1px solid rgba(37,99,235,0.18)",
+    borderRadius: 6,
     fontFamily: t.font.body,
-    fontSize: 14,
+    fontSize: 13,
     color: t.color.ink,
     outline: "none",
     cursor: "pointer",
-    transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+    transition: "border-color 0.15s, box-shadow 0.15s",
   },
 
-  // ── Paginación ──
-  paginationRow: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 16,
-    marginTop: 28,
-    paddingTop: 24,
-    borderTop: t.hairlineSoft,
-    flexWrap: "wrap",
-  },
-  pageBtn: {
-    padding: "8px 14px",
-    borderRadius: t.radius.sharp,
-    border: `1px solid ${t.color.brandLine}`,
-    background: "transparent",
-    color: t.color.muted,
-    fontFamily: t.font.display,
-    fontSize: 10.5,
-    fontWeight: 600,
-    letterSpacing: t.track.wide,
-    textTransform: "uppercase",
-    cursor: "pointer",
-    transition: "all 0.15s ease",
-  },
-  pageBtnDisabled: {
-    opacity: 0.35,
-    cursor: "not-allowed",
-  },
-  pageInfo: {
-    fontFamily: t.font.display,
-    fontSize: 11,
-    fontWeight: 600,
-    color: t.color.muted,
-    letterSpacing: t.track.wide,
-    textTransform: "uppercase",
-  },
-  clearFiltersBtn: {
-    padding: "10px 18px",
-    borderRadius: t.radius.sharp,
-    border: `1px solid ${t.color.brandLine}`,
-    background: "transparent",
-    color: t.color.muted,
-    fontFamily: t.font.display,
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: t.track.wider,
-    textTransform: "uppercase",
-    cursor: "pointer",
+  // ── Content area ──
+  contentArea: {
+    padding: "0 0 48px",
+    flex: 1,
   },
 
-  // ── Grid ──
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))",
-    gap: 18,
-  },
-  card: {
-    background: `linear-gradient(180deg, ${t.color.surface} 0%, #fafaf6 100%)`,
-    borderRadius: 12,
-    padding: "26px 26px 22px",
-    border: t.hairline,
-    position: "relative",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    minHeight: 168,
-    cursor: "pointer",
+  // Survey list (table-style)
+  list: {
+    margin: "0 48px",
+    border: "1px solid rgba(37,99,235,0.1)",
+    borderRadius: 10,
     overflow: "hidden",
+    background: t.color.surface,
   },
-  cardIndex: {
-    position: "absolute",
-    top: 14,
-    right: 14,
-    fontFamily: t.font.display,
-    fontSize: 9,
-    fontWeight: 700,
-    letterSpacing: t.track.widest,
-    color: t.color.mutedFaint,
-  },
-  cardTitle: {
-    fontFamily: t.font.display,
-    fontSize: 18,
-    fontWeight: 700,
-    margin: 0,
-    color: t.color.ink,
-    lineHeight: 1.26,
-    letterSpacing: "-0.02em",
-  },
-  cardClient: {
-    display: "inline-flex",
+  listHeader: {
+    display: "flex",
     alignItems: "center",
-    gap: 8,
+    padding: "11px 0",
+    background: "#060919",
+    borderBottom: "1px solid rgba(37,99,235,0.1)",
     fontFamily: t.font.display,
-    fontSize: 10.5,
-    fontWeight: 600,
-    letterSpacing: t.track.wide,
-    color: t.color.mutedSoft,
-    margin: "10px 0 0",
+    fontSize: 9, fontWeight: 700,
+    letterSpacing: "0.22em",
+    color: t.color.mutedFaint,
     textTransform: "uppercase",
+    gap: 0,
   },
-  cardClientDot: {
-    width: 6,
-    height: 6,
+  surveyRow: {
+    display: "flex",
+    alignItems: "center",
+    position: "relative",
+    borderBottom: "1px solid rgba(255,255,255,0.04)",
+    minHeight: 72,
+    background: "transparent",
+    cursor: "pointer",
+    gap: 0,
+  },
+  rowAccent: {
+    width: 3,
+    alignSelf: "stretch",
+    flexShrink: 0,
+    opacity: 0.9,
+  },
+  rowTitle: {
+    fontFamily: t.font.display,
+    fontSize: 15, fontWeight: 700,
+    color: t.color.ink,
+    letterSpacing: "-0.012em",
+    lineHeight: 1.3,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    maxWidth: 380,
+  },
+  rowOrg: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    fontFamily: t.font.display,
+    fontSize: 9.5, fontWeight: 600,
+    color: t.color.mutedSoft,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    marginTop: 5,
+  },
+  rowOrgDot: {
+    width: 5, height: 5,
     borderRadius: "50%",
     display: "inline-block",
     flexShrink: 0,
+    opacity: 0.75,
   },
-  cardFooter: {
-    display: "flex",
-    alignItems: "center",
-    gap: 14,
-    marginTop: 22,
-    paddingTop: 16,
-    borderTop: t.hairlineSoft,
-  },
-  responseStat: {
-    display: "inline-flex",
-    alignItems: "baseline",
-    gap: 6,
-  },
-  responseValue: {
+  rowResponseNum: {
     fontFamily: t.font.display,
-    fontSize: 22,
-    fontWeight: 800,
-    color: t.color.brand,
-    letterSpacing: "-0.03em",
+    fontSize: 26, fontWeight: 800,
+    letterSpacing: "-0.04em",
     lineHeight: 1,
+    fontVariantNumeric: "tabular-nums",
   },
-  responseLabel: {
+  rowResponseLabel: {
     fontFamily: t.font.display,
-    fontSize: 9.5,
-    fontWeight: 600,
-    letterSpacing: t.track.widest,
-    color: t.color.mutedSoft,
-    textTransform: "uppercase",
-  },
-  cardDate: {
-    marginLeft: "auto",
-    fontFamily: t.font.display,
-    fontSize: 9.5,
-    fontWeight: 600,
-    letterSpacing: t.track.widest,
+    fontSize: 9, fontWeight: 600,
     color: t.color.mutedFaint,
+    letterSpacing: "0.1em",
     textTransform: "uppercase",
   },
-  cardArrow: {
-    fontSize: 18,
+  rowDate: {
+    fontFamily: t.font.display,
+    fontSize: 9.5, fontWeight: 600,
+    color: t.color.mutedFaint,
+    letterSpacing: "0.06em",
+  },
+  rowArrow: {
+    fontFamily: t.font.display,
+    fontSize: 16,
     color: t.color.brand,
-    opacity: 0.45,
-    fontWeight: 600,
-    transition: `transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease`,
+    opacity: 0.28,
     display: "inline-block",
     transform: "translateX(0)",
   },
   favBtn: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    width: 28,
-    height: 28,
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
     background: "transparent",
     border: "none",
-    borderRadius: 6,
     cursor: "pointer",
-    padding: 0,
-    zIndex: 2,
+    padding: 5,
+    borderRadius: 5,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
-  // ── States ──
-  loadingState: {
+  // ── Loading / empty ──
+  loadingWrap: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
     padding: "80px 20px",
+    margin: "0 48px",
   },
   spinner: {
-    width: 32, height: 32,
-    border: `2px solid ${t.color.brandTintStrong}`,
+    width: 28, height: 28,
+    border: "2px solid rgba(37,99,235,0.18)",
     borderTopColor: t.color.brand,
     borderRadius: "50%",
     animation: "spin 0.8s linear infinite",
   },
-  emptyState: {
+  emptyWrap: {
     textAlign: "center",
-    padding: "80px 20px",
+    padding: "80px 24px",
+    margin: "0 48px",
     background: t.color.surface,
-    borderRadius: t.radius.card,
-    border: `1px dashed ${t.color.brandLine}`,
+    borderRadius: 10,
+    border: "1px dashed rgba(37,99,235,0.2)",
   },
-  emptyTag: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 12,
-    fontFamily: t.font.display,
-    fontSize: 10,
-    fontWeight: 700,
-    letterSpacing: t.track.technical,
-    color: t.color.brand,
-    textTransform: "uppercase",
-    marginBottom: 22,
-  },
-  emptyTitle: {
-    fontFamily: t.font.display,
-    fontSize: 22,
-    fontWeight: 700,
-    color: t.color.ink,
-    letterSpacing: t.track.tight,
-    margin: "0 0 10px",
-    lineHeight: 1.2,
-  },
-  emptySubtitle: {
-    fontFamily: t.font.body,
-    fontSize: 14,
-    color: t.color.mutedSoft,
-    margin: "0 0 28px",
-  },
-
-  // ─── Modal Crear perfil ──────────────────────────────────────────
-  modalOverlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(255,255,255,0.4)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 100,
-    padding: 20,
-  },
-  perfilesModal: {
-    background: "#0f172a",
-    borderRadius: t.radius.card,
-    maxWidth: 480,
-    width: "100%",
-    boxShadow: "0 20px 60px rgba(255,255,255,0.25)",
-    overflow: "hidden",
-  },
-  perfilesModalHeader: {
-    padding: "24px 24px 18px",
-    borderBottom: t.hairlineSoft,
-  },
-
-  // Modal de selector de tipo (Estándar / Perfiles)
-  typeModal: {
-    background: "#0f172a",
-    borderRadius: t.radius.card,
-    maxWidth: 820,
-    width: "100%",
-    boxShadow: "0 20px 60px rgba(255,255,255,0.25)",
-    overflow: "hidden",
-  },
-  typeModalHeader: {
-    padding: "24px 24px 18px",
-    borderBottom: t.hairlineSoft,
-  },
-  typeOptionsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-    gap: 14,
-    padding: "20px 24px",
-  },
-  typeCard: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-    padding: "20px 18px",
-    borderRadius: t.radius.card,
-    border: `1px solid ${t.color.brandLine}`,
-    background: "#0f172a",
-    cursor: "pointer",
-    textAlign: "left",
-    fontFamily: "inherit",
-    transition: "all 0.18s ease",
-  },
-  typeCardIcon: {
-    width: 44, height: 44, borderRadius: 10,
+  emptyIcon: {
+    width: 58, height: 58,
+    borderRadius: 14,
     background: "rgba(37,99,235,0.08)",
     color: t.color.brand,
     display: "flex", alignItems: "center", justifyContent: "center",
-    flexShrink: 0,
+    margin: "0 auto 20px",
   },
-  typeCardName: {
+  emptyTitle: {
     fontFamily: t.font.display,
-    fontSize: 15, fontWeight: 700,
+    fontSize: 20, fontWeight: 700,
     color: t.color.ink,
-    letterSpacing: "-0.005em",
+    letterSpacing: "-0.02em",
+    margin: "0 0 8px",
   },
-  typeCardDesc: {
-    fontFamily: t.font.body,
-    fontSize: 12.5,
-    color: t.color.muted,
-    lineHeight: 1.5,
+  emptyDesc: {
+    fontSize: 13.5,
+    color: t.color.mutedSoft,
+    margin: "0 0 26px",
+    lineHeight: 1.6,
   },
-  typeCardDisabled: {
-    cursor: "not-allowed",
-    opacity: 0.75,
-    background: "#070b1a",
-    position: "relative",
-    pointerEvents: "auto", // permitimos hover para el tooltip
-  },
-  typeCardLockedBadge: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    padding: "3px 9px",
-    borderRadius: 999,
-    background: "rgba(255,255,255,0.06)",
-    color: t.color.muted,
-    fontFamily: t.font.display,
-    fontSize: 9.5,
-    fontWeight: 700,
-    letterSpacing: "0.14em",
-    textTransform: "uppercase",
-  },
-  modalKicker: {
-    fontFamily: t.font.display,
-    fontSize: 10,
-    fontWeight: 700,
-    letterSpacing: t.track.widest,
-    color: t.color.brandBright,
-    textTransform: "uppercase",
-    marginBottom: 8,
-  },
-  modalTitle: {
-    fontFamily: t.font.display,
-    fontSize: 22,
-    fontWeight: 700,
-    color: t.color.ink,
-    letterSpacing: "-0.01em",
-    margin: 0,
-  },
-  modalDescription: {
-    fontFamily: t.font.body,
-    fontSize: 13,
-    color: t.color.muted,
-    lineHeight: 1.55,
-    margin: "10px 0 0",
-  },
-  modalLabel: {
-    display: "block",
-    fontFamily: t.font.display,
-    fontSize: 10,
-    fontWeight: 700,
-    letterSpacing: t.track.widest,
-    color: t.color.muted,
-    textTransform: "uppercase",
-    marginBottom: 6,
-  },
-  modalInput: {
-    width: "100%",
-    padding: "10px 12px",
-    borderRadius: t.radius.sharp,
-    border: `1px solid ${t.color.brandLine}`,
-    fontSize: 14,
-    fontFamily: t.font.body,
-    outline: "none",
-    boxSizing: "border-box",
-  },
-  modalActions: {
-    display: "flex",
-    gap: 10,
-    justifyContent: "flex-end",
-    padding: "16px 24px 24px",
-    borderTop: t.hairlineSoft,
-  },
-  modalCancelBtn: {
-    padding: "10px 18px",
-    borderRadius: t.radius.sharp,
-    border: `1px solid ${t.color.brandLine}`,
+  ghostBtn: {
+    padding: "10px 20px",
+    borderRadius: 6,
+    border: "1px solid rgba(37,99,235,0.28)",
     background: "transparent",
     color: t.color.muted,
     fontFamily: t.font.display,
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: t.track.wider,
+    fontSize: 11, fontWeight: 600,
+    letterSpacing: "0.12em",
     textTransform: "uppercase",
     cursor: "pointer",
   },
-  modalConfirmBtn: {
-    padding: "10px 18px",
-    borderRadius: t.radius.sharp,
-    border: "none",
-    background: t.color.brandBright,
-    color: "#fff",
+
+  // ── Pagination ──
+  pageRow: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 16,
+    margin: "28px 48px 0",
+    paddingTop: 24,
+    borderTop: "1px solid rgba(255,255,255,0.05)",
+    flexWrap: "wrap",
+  },
+  pageBtn: {
+    padding: "8px 14px",
+    borderRadius: 6,
+    border: "1px solid rgba(37,99,235,0.18)",
+    background: "transparent",
+    color: t.color.muted,
     fontFamily: t.font.display,
-    fontSize: 11,
-    fontWeight: 700,
-    letterSpacing: t.track.wider,
+    fontSize: 10.5, fontWeight: 600,
+    letterSpacing: "0.12em",
+    textTransform: "uppercase",
+    cursor: "pointer",
+    transition: "all 0.14s ease",
+  },
+  pageBtnDis: { opacity: 0.3, cursor: "not-allowed" },
+  pageInfo: {
+    fontFamily: t.font.display,
+    fontSize: 11, fontWeight: 600,
+    color: t.color.muted,
+    letterSpacing: "0.12em",
     textTransform: "uppercase",
   },
 };
