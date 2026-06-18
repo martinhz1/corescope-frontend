@@ -107,6 +107,43 @@ const TemplateIcon = ({ type, color }) => {
   return null;
 };
 
+const CAT_DOT_COLORS = ["#2563eb", "#7c3aed", "#0ea5e9", "#ef4444", "#f59e0b", "#10b981", "#f97316", "#ec4899"];
+
+function ToggleSwitch({ checked, onChange, label, description }) {
+  return (
+    <label style={{ display: "flex", alignItems: "flex-start", gap: 12, cursor: "pointer", userSelect: "none" }}>
+      <div style={{ flexShrink: 0, width: 40, height: 22, borderRadius: 11, position: "relative", background: checked ? "#2563eb" : "rgba(255,255,255,0.12)", transition: "background 0.2s", marginTop: 1 }}>
+        <input type="checkbox" checked={checked} onChange={onChange} style={{ position: "absolute", opacity: 0, width: 0, height: 0 }} />
+        <div style={{ position: "absolute", top: 3, left: checked ? 21 : 3, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
+      </div>
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0", lineHeight: 1.3 }}>{label}</div>
+        {description && <div style={{ fontSize: 11.5, color: "#64748b", marginTop: 3, lineHeight: 1.4 }}>{description}</div>}
+      </div>
+    </label>
+  );
+}
+
+function CircularProgress({ count }) {
+  const r = 36;
+  const circ = 2 * Math.PI * r;
+  const fill = count === 0 ? 0 : Math.min(count / 20, 1);
+  return (
+    <svg width={88} height={88} viewBox="0 0 88 88">
+      <circle cx="44" cy="44" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="7"/>
+      {count > 0 && (
+        <circle cx="44" cy="44" r={r} fill="none" stroke="#2563eb" strokeWidth="7"
+          strokeDasharray={`${fill * circ} ${circ}`}
+          strokeLinecap="round"
+          transform="rotate(-90 44 44)"
+          style={{ transition: "stroke-dasharray 0.5s ease" }}
+        />
+      )}
+      <text x="44" y="50" textAnchor="middle" fill="#f8fafc" fontSize="22" fontWeight="900" fontFamily="Archivo, system-ui">{count}</text>
+    </svg>
+  );
+}
+
 export default function SurveyBuilderPage() {
   const [questions, setQuestions] = useState([]);
   const [selected, setSelected] = useState([]);
@@ -120,6 +157,7 @@ export default function SurveyBuilderPage() {
   const [reviewQuestionDisplay, setReviewQuestionDisplay] = useState("both");
   const [showLabelsInForm, setShowLabelsInForm] = useState(true);
   const [filterCat, setFilterCat] = useState("Todas");
+  const [bankSearch, setBankSearch] = useState("");
   const [saving, setSaving] = useState(false);
   const [showTemplates, setShowTemplates] = useState(true);
   const [showCustomForm, setShowCustomForm] = useState(false);
@@ -245,7 +283,14 @@ export default function SurveyBuilderPage() {
   }, [dirty]);
 
   const categories = ["Todas", ...new Set(questions.map(q => q.category))];
-  const filtered = filterCat === "Todas" ? questions : questions.filter(q => q.category === filterCat);
+  const filtered = (() => {
+    let qs = filterCat === "Todas" ? questions : questions.filter(q => q.category === filterCat);
+    if (bankSearch.trim()) {
+      const s = bankSearch.trim().toLowerCase();
+      qs = qs.filter(q => q.text.toLowerCase().includes(s));
+    }
+    return qs;
+  })();
 
   // ─────────────────────────────────────────────────────────────
   // Handlers — sólo modifican estado local. En edit mode, marcan
@@ -637,9 +682,11 @@ export default function SurveyBuilderPage() {
       <style>{`
         ${globalKeyframes}
         .q-card { transition: all 0.18s ${t.ease}; }
-        .q-card:hover { border-color: ${t.color.brandLineHover} !important; }
+        .q-card:hover { border-color: ${t.color.brandLineHover} !important; background: rgba(37,99,235,0.04) !important; }
+        .q-card:hover button { background: ${t.color.brandHover} !important; }
         .cat-btn { transition: all 0.15s ease; }
-        .cat-btn:hover { background: ${t.color.brandTint} !important; color: ${t.color.brand} !important; }
+        .cat-btn:hover { background: ${t.color.brandTint} !important; border-color: ${t.color.brandLineHover} !important; color: ${t.color.brand} !important; }
+        .box-input:focus { border-color: ${t.color.brand} !important; }
         .tmpl-card { transition: all 0.2s ${t.ease}; cursor: pointer; }
         .tmpl-card:hover { transform: translateY(-2px); border-color: ${t.color.brandLineHover}; box-shadow: 0 10px 30px -16px rgba(37,99,235,0.25); }
         .tmpl-card:hover .tmpl-arrow { transform: translateX(3px); }
@@ -750,109 +797,96 @@ export default function SurveyBuilderPage() {
         )}
         {/* Config — sólo en create mode (en edit, la metadata se gestiona desde el detail page) */}
         {!editMode && (
-        <div style={{ animation: "fadeUp 0.4s ease both", marginBottom: 28 }}>
-          {/* Fila 1: campos principales */}
-          <div style={{ display: "grid", gridTemplateColumns: "2.2fr 1.2fr 0.75fr 0.75fr 1.1fr", gap: 10, marginBottom: 10, alignItems: "start" }}>
-            <div style={S.configCard}>
-              <label style={S.label}>Título del pulso</label>
-              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ej: Pulso Q1 2026" style={S.inputLine} />
+        <div style={{ animation: "fadeUp 0.4s ease both", marginBottom: 24 }}>
+          <div style={S.configWrap}>
+            {/* Card header */}
+            <div style={S.configHeader}>
+              <div style={S.configHeaderIcon}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+              </div>
+              <span style={S.configHeaderTitle}>Configuración del pulso</span>
             </div>
-            <div style={S.configCard}>
-              <label style={S.label}>Organización</label>
-              <input value={clientName} onChange={e => setClientName(e.target.value)} placeholder="Ej: Empresa ABC" style={S.inputLine} />
-            </div>
-            <div style={S.configCard}>
-              <label style={S.label}>Color</label>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
-                <input type="color" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} style={{ width: 28, height: 28, border: "none", borderRadius: 6, cursor: "pointer", padding: 0, flexShrink: 0 }} />
-                <input
-                  type="text"
-                  value={primaryColor}
-                  onChange={e => {
-                    let v = e.target.value.trim();
-                    if (v && !v.startsWith("#")) v = "#" + v;
-                    if (/^#[0-9a-fA-F]{0,6}$/.test(v)) setPrimaryColor(v);
-                  }}
-                  maxLength={7}
-                  style={{ width: 68, fontSize: 12, color: "#94a3b8", fontFamily: "monospace", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 5, padding: "4px 6px", outline: "none", background: "#0f172a" }}
-                />
+
+            {/* Fila 1: campos principales */}
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1.3fr 0.9fr 1fr", gap: 14, marginBottom: 16 }}>
+              <div>
+                <label style={S.configLabel}>Título del pulso</label>
+                <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ej: Pulso Q1 2026" style={S.boxInput} />
+              </div>
+              <div>
+                <label style={S.configLabel}>Organización</label>
+                <input value={clientName} onChange={e => setClientName(e.target.value)} placeholder="Ej: Empresa ABC" style={S.boxInput} />
+              </div>
+              <div>
+                <label style={S.configLabel}>Escala</label>
+                <select value={scale} onChange={e => setScale(e.target.value)} style={S.boxSelect}>
+                  <option value="likert_5">Likert 1-5</option>
+                  <option value="likert_7">Likert 1-7</option>
+                  <option value="likert_10">Likert 1-10</option>
+                </select>
+              </div>
+              <div>
+                <label style={S.configLabel}>Cierre automático</label>
+                <input type="datetime-local" value={closesAt} onChange={e => setClosesAt(e.target.value)} style={{ ...S.boxSelect, colorScheme: "dark" }} />
+                {closesAt && (
+                  <button onClick={() => setClosesAt("")} style={{ background: "none", border: "none", fontSize: 11, color: "#475569", cursor: "pointer", padding: "4px 0 0", fontFamily: "inherit" }}>
+                    Quitar fecha
+                  </button>
+                )}
               </div>
             </div>
-            <div style={S.configCard}>
-              <label style={S.label}>Escala</label>
-              <select value={scale} onChange={e => setScale(e.target.value)} style={S.select}>
-                <option value="likert_5">Likert 1-5</option>
-                <option value="likert_7">Likert 1-7</option>
-                <option value="likert_10">Likert 1-10</option>
-              </select>
-            </div>
-            <div style={S.configCard}>
-              <label style={S.label}>Cierre automático</label>
-              <input type="datetime-local" value={closesAt} onChange={e => setClosesAt(e.target.value)} style={{ ...S.select, marginTop: 8, colorScheme: "light" }} />
-              {closesAt && (
-                <button onClick={() => setClosesAt("")} style={{ background: "none", border: "none", fontSize: 11, color: "#475569", cursor: "pointer", padding: "4px 0 0", fontFamily: "inherit" }}>
-                  Quitar fecha
-                </button>
-              )}
-            </div>
-          </div>
-          {/* Fila 2: logotipo + opciones */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-            <div style={S.configCard}>
-              <label style={S.label}>Logotipo</label>
-              <div style={{ marginTop: 6 }}>
-                <LogoInput
-                  value={logoUrl}
-                  onChange={setLogoUrl}
-                  inputStyle={{ ...S.inputLine, marginTop: 0 }}
-                />
+
+            {/* Fila 2: color + logo + toggles */}
+            <div style={{ display: "grid", gridTemplateColumns: "1.25fr 1fr 1fr", gap: 14, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <div>
+                <label style={S.configLabel}>Color y logotipo</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+                  <input type="color" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} style={{ width: 32, height: 32, border: "none", borderRadius: 8, cursor: "pointer", padding: 0, flexShrink: 0 }} />
+                  <input
+                    type="text"
+                    value={primaryColor}
+                    onChange={e => {
+                      let v = e.target.value.trim();
+                      if (v && !v.startsWith("#")) v = "#" + v;
+                      if (/^#[0-9a-fA-F]{0,6}$/.test(v)) setPrimaryColor(v);
+                    }}
+                    maxLength={7}
+                    style={{ width: 74, fontSize: 12, color: "#94a3b8", fontFamily: "monospace", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 8px", outline: "none", background: "#070b1a" }}
+                  />
+                </div>
+                <div style={{ marginTop: 10 }}>
+                  <LogoInput value={logoUrl} onChange={setLogoUrl} inputStyle={{ ...S.boxInput, marginTop: 4, fontSize: 12 }} />
+                </div>
               </div>
-            </div>
-            <div style={S.configCard}>
-              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
-                <input
-                  type="checkbox"
+              <div style={{ display: "flex", alignItems: "flex-start", paddingTop: 4 }}>
+                <ToggleSwitch
                   checked={showLabelsInForm}
                   onChange={e => setShowLabelsInForm(e.target.checked)}
-                  style={{ marginTop: 3, accentColor: "#2563eb", flexShrink: 0, width: 14, height: 14, cursor: "pointer" }}
+                  label="Etiquetas en formulario"
+                  description={'Las etiquetas (ej. "Liderazgo") aparecen en negrita sobre cada pregunta.'}
                 />
-                <div style={{ flex: 1 }}>
-                  <div style={{ ...S.label, marginBottom: 4 }}>Mostrar etiquetas en el formulario</div>
-                  <div style={{ fontSize: 11.5, color: "#64748b", lineHeight: 1.5 }}>
-                    Las etiquetas (ej. "Liderazgo") aparecen en negrita sobre el texto de cada pregunta.
-                  </div>
-                </div>
-              </label>
-            </div>
-            <div style={S.configCard}>
-              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
-                <input
-                  type="checkbox"
+              </div>
+              <div style={{ paddingTop: 4 }}>
+                <ToggleSwitch
                   checked={showPersonalReview}
                   onChange={e => setShowPersonalReview(e.target.checked)}
-                  style={{ marginTop: 3, accentColor: "#2563eb", flexShrink: 0, width: 14, height: 14, cursor: "pointer" }}
+                  label="Mostrar review al final"
+                  description="El respondente verá un ranking de sus respuestas Likert antes de finalizar."
                 />
-                <div style={{ flex: 1 }}>
-                  <div style={{ ...S.label, marginBottom: 4 }}>Mostrar respuestas al final</div>
-                  <div style={{ fontSize: 11.5, color: "#64748b", lineHeight: 1.5 }}>
-                    El respondente verá un ranking de sus respuestas Likert antes de finalizar.
+                {showPersonalReview && (
+                  <div style={{ marginTop: 12 }}>
+                    <label style={{ ...S.configLabel, display: "block", marginBottom: 4 }}>Vista en la review</label>
+                    <select value={reviewQuestionDisplay} onChange={e => setReviewQuestionDisplay(e.target.value)} style={S.boxSelect}>
+                      <option value="both">Etiqueta + afirmación</option>
+                      <option value="label_only">Solo etiqueta</option>
+                      <option value="text_only">Solo afirmación</option>
+                    </select>
                   </div>
-                </div>
-              </label>
-              {showPersonalReview && (
-                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                  <label style={{ ...S.label, marginBottom: 4, display: "block" }}>Vista en la review</label>
-                  <select
-                    value={reviewQuestionDisplay}
-                    onChange={e => setReviewQuestionDisplay(e.target.value)}
-                    style={S.select}
-                  >
-                    <option value="both">Etiqueta + afirmación</option>
-                    <option value="label_only">Solo etiqueta</option>
-                    <option value="text_only">Solo afirmación</option>
-                  </select>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -907,48 +941,79 @@ export default function SurveyBuilderPage() {
               <span style={S.sectionMeta}>{questions.length} DISPONIBLES</span>
             </div>
 
-            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 14 }}>
-              {categories.map(cat => {
+            {/* Search */}
+            <div style={{ position: "relative", marginBottom: 10 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input
+                value={bankSearch}
+                onChange={e => setBankSearch(e.target.value)}
+                placeholder="Buscar preguntas…"
+                style={{ width: "100%", padding: "9px 12px 9px 33px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "#0f172a", fontSize: 13, fontFamily: "inherit", outline: "none", color: "#e2e8f0", boxSizing: "border-box" }}
+              />
+            </div>
+
+            {/* Category pills with colored dots */}
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+              {categories.map((cat, ci) => {
                 const on = filterCat === cat;
+                const dotColor = cat === "Todas" ? "#94a3b8" : CAT_DOT_COLORS[(ci - 1) % CAT_DOT_COLORS.length];
                 return (
                   <button key={cat} className="cat-btn" onClick={() => setFilterCat(cat)} style={{
-                    padding: "6px 12px",
-                    borderRadius: t.radius.sharp,
-                    fontFamily: t.font.display,
-                    fontSize: 10.5,
-                    fontWeight: on ? 700 : 600,
-                    letterSpacing: t.track.wide,
-                    textTransform: "uppercase",
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "5px 12px 5px 9px",
+                    borderRadius: 999,
+                    fontFamily: t.font.body,
+                    fontSize: 12,
+                    fontWeight: on ? 600 : 400,
                     cursor: "pointer",
-                    border: `1px solid ${on ? t.color.brand : t.color.brandLine}`,
-                    background: on ? t.color.brandTint : "transparent",
+                    border: `1px solid ${on ? t.color.brand : "rgba(255,255,255,0.1)"}`,
+                    background: on ? t.color.brandTint : "rgba(255,255,255,0.04)",
                     color: on ? t.color.brand : t.color.muted,
-                  }}>{cat}</button>
+                    transition: "all 0.15s",
+                  }}>
+                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: on ? t.color.brand : dotColor, flexShrink: 0, opacity: on ? 1 : 0.7 }} />
+                    {cat}
+                  </button>
                 );
               })}
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 600, overflowY: "auto", paddingRight: 4 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 620, overflowY: "auto", paddingRight: 4 }}>
               {filtered.map(q => {
-                const isSel = selected.find(s => s.id === q.id);
+                const isSel = !!selected.find(s => s.id === q.id);
                 return (
                   <div key={q.id} className={isSel ? "" : "q-card"} onClick={() => !isSel && addQuestion(q)} style={{
-                    padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)", background: isSel ? "#f3f3f3" : "#fff",
-                    cursor: isSel ? "default" : "pointer", opacity: isSel ? 0.45 : 1, display: "flex", alignItems: "flex-start", gap: 10,
+                    padding: "12px 14px", borderRadius: 12,
+                    border: `1px solid ${isSel ? "rgba(37,99,235,0.25)" : "rgba(255,255,255,0.07)"}`,
+                    background: isSel ? "rgba(37,99,235,0.06)" : "#0f172a",
+                    cursor: isSel ? "default" : "pointer",
+                    display: "flex", alignItems: "flex-start", gap: 10,
                   }}>
-                    <div style={{
-                      marginTop: 2, width: 20, height: 20, borderRadius: 6, flexShrink: 0,
-                      border: `1.5px solid ${isSel ? "#b7b7b7" : "#2563eb"}`, display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                      {!isSel && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>}
-                    </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.45 }}>{q.text}</div>
-                      <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                        <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 12, background: TYPE_BG[q.question_type], color: TYPE_COLORS[q.question_type] }}>{TYPE_LABELS[q.question_type]}</span>
-                        <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 12, background: "rgba(255,255,255,0.03)", color: "#64748b" }}>{q.category}</span>
+                      <div style={{ fontSize: 13.5, color: isSel ? "#475569" : "#e2e8f0", lineHeight: 1.45 }}>{q.text}</div>
+                      <div style={{ display: "flex", gap: 6, marginTop: 7 }}>
+                        <span style={{ fontSize: 10.5, fontWeight: 600, padding: "3px 9px", borderRadius: 12, background: TYPE_BG[q.question_type], color: TYPE_COLORS[q.question_type] }}>{TYPE_LABELS[q.question_type]}</span>
+                        <span style={{ fontSize: 10.5, padding: "3px 9px", borderRadius: 12, background: "rgba(255,255,255,0.05)", color: "#64748b" }}>{q.category}</span>
                       </div>
                     </div>
+                    <button
+                      onClick={e => { e.stopPropagation(); if (!isSel) addQuestion(q); }}
+                      disabled={isSel}
+                      style={{
+                        width: 28, height: 28, borderRadius: "50%", border: "none", flexShrink: 0, marginTop: 2,
+                        background: isSel ? "rgba(37,99,235,0.15)" : "#2563eb",
+                        cursor: isSel ? "default" : "pointer",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {isSel
+                        ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      }
+                    </button>
                   </div>
                 );
               })}
@@ -1057,71 +1122,92 @@ export default function SurveyBuilderPage() {
             </div>
           </div>
 
-          {/* Selected */}
-          <div>
-            <div style={S.sectionHeader}>
-              <div>
-                <span style={S.sectionTag}>SELECCIÓN</span>
-                <h2 style={S.sectionH3}>Tu pulso</h2>
+          {/* Cart / Selected — sticky panel */}
+          <div style={{ alignSelf: "start", position: "sticky", top: 88 }}>
+            {/* Progress ring + Tu pulso header */}
+            <div style={S.cartHeader}>
+              <CircularProgress count={selected.length} />
+              <div style={{ textAlign: "center", marginTop: 10 }}>
+                <div style={{ fontFamily: t.font.display, fontSize: 17, fontWeight: 700, color: t.color.ink, letterSpacing: "-0.015em" }}>Tu pulso</div>
+                <div style={{ fontSize: 12, color: t.color.mutedSoft, marginTop: 3 }}>
+                  {selected.length === 0
+                    ? "Sin preguntas aún"
+                    : `${selected.length} pregunta${selected.length !== 1 ? "s" : ""} seleccionada${selected.length !== 1 ? "s" : ""}`}
+                </div>
               </div>
-              <span style={S.sectionMeta}>{selected.length} SELECCIONADAS</span>
             </div>
 
-            {selected.length === 0 ? (
-              <div style={S.empty}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#b7b7b7" strokeWidth="1.2" strokeLinecap="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                  <line x1="12" y1="13" x2="12" y2="17"/><line x1="10" y1="15" x2="14" y2="15"/>
-                </svg>
-                <div style={{ fontSize: 14, color: "#475569", marginTop: 12 }}>Elige un template arriba o haz click en una pregunta</div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: 740, overflowY: "auto", paddingRight: 4 }}>
-                {selected.some(q => q.isDemographic) && (
-                  <div>
-                    <div style={S.selectedSectionHeader}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                      Demográficas (segmentan el dashboard)
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      {selected.map((q, idx) => q.isDemographic && (
-                        <SelectedQuestionCard
-                          key={q.id} q={q} idx={idx} total={selected.length}
-                          moveQuestion={moveQuestion} removeQuestion={removeQuestion}
-                          toggleRequired={toggleRequired} toggleAllowNsNr={toggleAllowNsNr} setQuestionScale={setQuestionScale}
-                          addOption={addOption} removeOption={removeOption}
-                          editingId={editingId} setEditingId={setEditingId}
-                          updateQuestionText={updateQuestionText}
-                          updateQuestionLabel={updateQuestionLabel}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {selected.some(q => !q.isDemographic) && (
-                  <div>
-                    {selected.some(q => q.isDemographic) && (
+            {/* Question list */}
+            <div style={{ maxHeight: "calc(100vh - 380px)", overflowY: "auto", paddingRight: 2 }}>
+              {selected.length === 0 ? (
+                <div style={S.empty}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="1.2" strokeLinecap="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                    <line x1="12" y1="13" x2="12" y2="17"/><line x1="10" y1="15" x2="14" y2="15"/>
+                  </svg>
+                  <div style={{ fontSize: 13, color: "#475569", marginTop: 10, lineHeight: 1.5 }}>Elige un template o haz click en una pregunta del banco</div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {selected.some(q => q.isDemographic) && (
+                    <div>
                       <div style={S.selectedSectionHeader}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                        Preguntas del pulso
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Demográficas (segmentan el dashboard)
                       </div>
-                    )}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      {selected.map((q, idx) => !q.isDemographic && (
-                        <SelectedQuestionCard
-                          key={q.id} q={q} idx={idx} total={selected.length}
-                          moveQuestion={moveQuestion} removeQuestion={removeQuestion}
-                          toggleRequired={toggleRequired} toggleAllowNsNr={toggleAllowNsNr} setQuestionScale={setQuestionScale}
-                          addOption={addOption} removeOption={removeOption}
-                          editingId={editingId} setEditingId={setEditingId}
-                          updateQuestionText={updateQuestionText}
-                          updateQuestionLabel={updateQuestionLabel}
-                        />
-                      ))}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        {selected.map((q, idx) => q.isDemographic && (
+                          <SelectedQuestionCard
+                            key={q.id} q={q} idx={idx} total={selected.length}
+                            moveQuestion={moveQuestion} removeQuestion={removeQuestion}
+                            toggleRequired={toggleRequired} toggleAllowNsNr={toggleAllowNsNr} setQuestionScale={setQuestionScale}
+                            addOption={addOption} removeOption={removeOption}
+                            editingId={editingId} setEditingId={setEditingId}
+                            updateQuestionText={updateQuestionText}
+                            updateQuestionLabel={updateQuestionLabel}
+                          />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                  {selected.some(q => !q.isDemographic) && (
+                    <div>
+                      {selected.some(q => q.isDemographic) && (
+                        <div style={S.selectedSectionHeader}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                          Preguntas del pulso
+                        </div>
+                      )}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        {selected.map((q, idx) => !q.isDemographic && (
+                          <SelectedQuestionCard
+                            key={q.id} q={q} idx={idx} total={selected.length}
+                            moveQuestion={moveQuestion} removeQuestion={removeQuestion}
+                            toggleRequired={toggleRequired} toggleAllowNsNr={toggleAllowNsNr} setQuestionScale={setQuestionScale}
+                            addOption={addOption} removeOption={removeOption}
+                            editingId={editingId} setEditingId={setEditingId}
+                            updateQuestionText={updateQuestionText}
+                            updateQuestionLabel={updateQuestionLabel}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* CTA button */}
+            {!editMode && selected.length > 0 && (
+              <button className="save-btn" onClick={handleSave} disabled={saving} style={{ ...S.saveBtn, width: "100%", justifyContent: "center", marginTop: 14, borderRadius: 12, padding: "13px 22px" }}>
+                <span>{saving ? "Guardando…" : "Guardar y continuar →"}</span>
+              </button>
+            )}
+            {editMode && (
+              <button className="save-btn" onClick={saveEdits} disabled={!dirty || savingEdits} style={{ ...S.saveBtn, width: "100%", justifyContent: "center", marginTop: 14, borderRadius: 12, padding: "13px 22px" }}>
+                <span>{savingEdits ? "Guardando…" : "Guardar ediciones →"}</span>
+                {pendingChangesCount > 0 && !savingEdits && <span style={S.saveBadge}>{pendingChangesCount}</span>}
+              </button>
             )}
           </div>
         </div>
@@ -1591,13 +1677,71 @@ const S = {
   // ── Content ──
   content: { maxWidth: 1400, margin: "0 auto", padding: "32px 32px 32px" },
 
-  // ── Config cards ──
-  configCard: {
+  // ── Config unified card ──
+  configWrap: {
     background: t.color.surface,
-    borderRadius: t.radius.card,
-    padding: "16px 18px",
+    borderRadius: 16,
+    padding: "20px 24px",
     border: t.hairline,
   },
+  configHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 18,
+    paddingBottom: 14,
+    borderBottom: "1px solid rgba(255,255,255,0.06)",
+  },
+  configHeaderIcon: {
+    width: 28, height: 28, borderRadius: 8,
+    background: "rgba(37,99,235,0.12)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    flexShrink: 0,
+  },
+  configHeaderTitle: {
+    fontFamily: t.font.display,
+    fontSize: 13,
+    fontWeight: 700,
+    color: t.color.ink,
+    letterSpacing: "-0.01em",
+  },
+  configLabel: {
+    fontFamily: t.font.display,
+    fontSize: 10,
+    fontWeight: 600,
+    letterSpacing: t.track.widest,
+    color: t.color.mutedSoft,
+    textTransform: "uppercase",
+    display: "block",
+    marginBottom: 6,
+  },
+  boxInput: {
+    width: "100%",
+    padding: "9px 12px",
+    border: `1px solid ${t.color.borderStrong}`,
+    borderRadius: 10,
+    background: t.color.paper,
+    fontSize: 14,
+    fontFamily: t.font.body,
+    outline: "none",
+    color: t.color.ink,
+    fontWeight: 500,
+    boxSizing: "border-box",
+    transition: "border-color 0.15s",
+  },
+  boxSelect: {
+    width: "100%",
+    padding: "9px 12px",
+    border: `1px solid ${t.color.borderStrong}`,
+    borderRadius: 10,
+    background: t.color.paper,
+    fontSize: 13,
+    fontFamily: t.font.body,
+    outline: "none",
+    color: t.color.ink,
+    boxSizing: "border-box",
+  },
+  // legacy — keep for SelectedQuestionCard inline usage
   label: {
     fontFamily: t.font.display,
     fontSize: 10,
@@ -1633,7 +1777,19 @@ const S = {
   },
 
   // ── Columns layout ──
-  columns: { display: "grid", gridTemplateColumns: "1fr 1.25fr", gap: 28 },
+  columns: { display: "grid", gridTemplateColumns: "1.15fr 1fr", gap: 24 },
+
+  // ── Cart (selected) panel ──
+  cartHeader: {
+    background: t.color.surface,
+    borderRadius: 16,
+    border: t.hairline,
+    padding: "22px 20px 18px",
+    marginBottom: 10,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  },
 
   // ── Section headers ──
   sectionHeader: {
